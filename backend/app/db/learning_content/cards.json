@@ -1,0 +1,1254 @@
+{
+  "k8s_cards": [
+    {
+      "front": "What is a Kubernetes Pod?",
+      "back": "A **Pod** is the smallest deployable unit in Kubernetes. It wraps one or more containers that share the same network namespace, IP address, and storage volumes. Containers in a Pod communicate via `localhost`.",
+      "code_example": "# List all pods in the current namespace\nkubectl get pods\n# Describe a specific pod\nkubectl describe pod my-pod",
+      "difficulty": "easy",
+      "tags": ["pods", "fundamentals"]
+    },
+    {
+      "front": "What is a Kubernetes Deployment?",
+      "back": "A **Deployment** is a higher-level controller that manages **ReplicaSets** to ensure a desired number of Pod replicas are running. It supports declarative rolling updates and rollbacks.",
+      "code_example": "kubectl create deployment nginx --image=nginx:1.25 --replicas=3\nkubectl rollout status deployment/nginx",
+      "difficulty": "easy",
+      "tags": ["deployments", "fundamentals"]
+    },
+    {
+      "front": "What is a ReplicaSet?",
+      "back": "A **ReplicaSet** ensures that a specified number of Pod replicas are running at any given time. It uses label selectors to identify the Pods it manages. Deployments are the preferred way to manage ReplicaSets.",
+      "code_example": "kubectl get replicaset\nkubectl describe replicaset my-rs",
+      "difficulty": "easy",
+      "tags": ["replicasets", "fundamentals"]
+    },
+    {
+      "front": "What is a DaemonSet?",
+      "back": "A **DaemonSet** ensures that one Pod runs on every (or a subset of) node(s) in the cluster. It is typically used for cluster-wide services like log collectors, monitoring agents, or CNI plugins.",
+      "code_example": "kubectl get daemonset -n kube-system\nkubectl describe daemonset fluentd",
+      "difficulty": "easy",
+      "tags": ["daemonsets", "fundamentals"]
+    },
+    {
+      "front": "What is a StatefulSet?",
+      "back": "A **StatefulSet** manages stateful applications that require stable, unique network identities and persistent storage. Pods get ordered names (e.g., `app-0`, `app-1`) and are created/deleted in order.",
+      "code_example": "kubectl get statefulset\nkubectl scale statefulset postgres --replicas=3",
+      "difficulty": "easy",
+      "tags": ["statefulsets", "fundamentals"]
+    },
+    {
+      "front": "What is a Kubernetes Job?",
+      "back": "A **Job** creates one or more Pods and ensures a specified number of them successfully complete. Once all completions are reached, the Job is marked complete. It is used for batch or one-off tasks.",
+      "code_example": "kubectl create job pi --image=perl -- perl -Mbignum=bpi -wle 'print bpi(2000)'\nkubectl get jobs",
+      "difficulty": "easy",
+      "tags": ["jobs", "batch"]
+    },
+    {
+      "front": "What is a CronJob in Kubernetes?",
+      "back": "A **CronJob** creates Jobs on a repeating schedule using cron syntax. It is used for periodic tasks like backups or report generation. Each scheduled run creates a new Job object.",
+      "code_example": "# Run every hour\nkubectl create cronjob hello --image=busybox --schedule=\"0 * * * *\" -- echo hello\nkubectl get cronjobs",
+      "difficulty": "easy",
+      "tags": ["cronjobs", "batch"]
+    },
+    {
+      "front": "What is a ConfigMap?",
+      "back": "A **ConfigMap** stores non-sensitive configuration data as key-value pairs. It decouples environment-specific configuration from container images. Pods can consume ConfigMaps as environment variables, command-line arguments, or files.",
+      "code_example": "kubectl create configmap app-config --from-literal=LOG_LEVEL=debug\nkubectl get configmap app-config -o yaml",
+      "difficulty": "easy",
+      "tags": ["configmaps", "configuration"]
+    },
+    {
+      "front": "What is a Kubernetes Secret?",
+      "back": "A **Secret** stores small amounts of sensitive data such as passwords, tokens, or keys. Values are base64-encoded at rest by default (not encrypted unless you configure encryption providers). Pods consume Secrets similarly to ConfigMaps.",
+      "code_example": "kubectl create secret generic db-pass --from-literal=password=s3cr3t\nkubectl get secret db-pass -o jsonpath='{.data.password}' | base64 -d",
+      "difficulty": "easy",
+      "tags": ["secrets", "security"]
+    },
+    {
+      "front": "What is a Namespace in Kubernetes?",
+      "back": "A **Namespace** provides a logical isolation boundary within a cluster, allowing multiple teams or environments to share the same cluster. Resource names must be unique within a namespace but can repeat across namespaces.",
+      "code_example": "kubectl create namespace staging\nkubectl get pods -n staging\nkubectl config set-context --current --namespace=staging",
+      "difficulty": "easy",
+      "tags": ["namespaces", "fundamentals"]
+    },
+    {
+      "front": "What is a Service in Kubernetes?",
+      "back": "A **Service** is an abstraction that defines a stable network endpoint for a set of Pods selected by label. It provides load balancing, service discovery via DNS, and decouples consumers from Pod IP changes.",
+      "code_example": "kubectl expose deployment nginx --port=80 --type=ClusterIP\nkubectl get service nginx",
+      "difficulty": "easy",
+      "tags": ["services", "networking"]
+    },
+    {
+      "front": "What is a ClusterIP Service?",
+      "back": "**ClusterIP** is the default Service type. It assigns a virtual IP that is only reachable from within the cluster. It is ideal for internal microservice communication.",
+      "code_example": "# service.yaml\napiVersion: v1\nkind: Service\nmetadata:\n  name: my-svc\nspec:\n  type: ClusterIP\n  selector:\n    app: my-app\n  ports:\n    - port: 80\n      targetPort: 8080",
+      "difficulty": "easy",
+      "tags": ["services", "networking", "clusterip"]
+    },
+    {
+      "front": "What are labels and selectors in Kubernetes?",
+      "back": "**Labels** are key-value pairs attached to objects used for identification. **Selectors** allow controllers and Services to filter objects by their labels. They are the primary mechanism for loose coupling between Kubernetes resources.",
+      "code_example": "kubectl label pod my-pod env=prod\nkubectl get pods -l env=prod\nkubectl get pods -l 'env in (prod, staging)'",
+      "difficulty": "easy",
+      "tags": ["labels", "selectors", "fundamentals"]
+    },
+    {
+      "front": "What is an annotation in Kubernetes?",
+      "back": "**Annotations** are key-value pairs attached to objects to store arbitrary non-identifying metadata (e.g., build info, tool configurations). Unlike labels, annotations cannot be used with selectors.",
+      "code_example": "kubectl annotate pod my-pod git-commit=abc123\nkubectl get pod my-pod -o jsonpath='{.metadata.annotations}'",
+      "difficulty": "easy",
+      "tags": ["annotations", "metadata"]
+    },
+    {
+      "front": "What is a PersistentVolume (PV)?",
+      "back": "A **PersistentVolume** is a cluster-level storage resource provisioned by an administrator or dynamically via a StorageClass. It has a lifecycle independent of any Pod and represents physical storage (NFS, cloud disk, etc.).",
+      "code_example": "kubectl get pv\nkubectl describe pv my-pv",
+      "difficulty": "easy",
+      "tags": ["storage", "persistentvolumes"]
+    },
+    {
+      "front": "What is a PersistentVolumeClaim (PVC)?",
+      "back": "A **PersistentVolumeClaim** is a request for storage by a user. It binds to a matching PV based on access mode and capacity. Once bound, a Pod can mount the PVC as a volume.",
+      "code_example": "kubectl get pvc\nkubectl describe pvc my-claim",
+      "difficulty": "easy",
+      "tags": ["storage", "pvc"]
+    },
+    {
+      "front": "What is a ServiceAccount in Kubernetes?",
+      "back": "A **ServiceAccount** provides an identity for processes running in a Pod. It is used to control API access via RBAC. Each namespace has a `default` ServiceAccount created automatically.",
+      "code_example": "kubectl create serviceaccount my-sa\nkubectl get serviceaccount\n# Reference in pod spec:\n# spec:\n#   serviceAccountName: my-sa",
+      "difficulty": "easy",
+      "tags": ["rbac", "serviceaccounts", "security"]
+    },
+    {
+      "front": "What does kubectl get events show?",
+      "back": "**kubectl get events** shows cluster events — warnings and informational messages generated by controllers and the scheduler. It is often the first place to look when a Pod is stuck in Pending or CrashLoopBackOff.",
+      "code_example": "kubectl get events --sort-by='.lastTimestamp'\nkubectl get events -n my-namespace --field-selector type=Warning",
+      "difficulty": "easy",
+      "tags": ["debugging", "kubectl"]
+    },
+    {
+      "front": "What is the role of the kube-scheduler?",
+      "back": "The **kube-scheduler** watches for newly created Pods with no assigned node and selects an optimal node based on resource requirements, affinity rules, taints/tolerations, and other policies. It does not run the Pod — it only binds it to a node.",
+      "code_example": "# Check scheduler logs\nkubectl logs -n kube-system -l component=kube-scheduler",
+      "difficulty": "easy",
+      "tags": ["scheduler", "control-plane"]
+    },
+    {
+      "front": "What is the kubelet?",
+      "back": "The **kubelet** is a node-level agent that watches for Pods assigned to its node (via the API server) and ensures the containers are running and healthy. It reports node and Pod status back to the control plane.",
+      "code_example": "# Check kubelet status on a node\nsystemctl status kubelet\njournalctl -u kubelet -n 50",
+      "difficulty": "easy",
+      "tags": ["kubelet", "node-components"]
+    },
+    {
+      "front": "How do you perform a rolling update on a Deployment and roll it back if it fails?",
+      "back": "Update the image with `kubectl set image` or apply a new manifest. Kubernetes replaces Pods incrementally per `maxSurge`/`maxUnavailable` settings. If the rollout fails, use `kubectl rollout undo` to revert to the previous ReplicaSet.",
+      "code_example": "kubectl set image deployment/nginx nginx=nginx:1.26\nkubectl rollout status deployment/nginx\n# If broken:\nkubectl rollout undo deployment/nginx\n# View rollout history:\nkubectl rollout history deployment/nginx",
+      "difficulty": "medium",
+      "tags": ["deployments", "rollout", "updates"]
+    },
+    {
+      "front": "How do you configure resource requests and limits for a container?",
+      "back": "Set **requests** (scheduler uses these for placement) and **limits** (hard caps enforced by cgroups) under `resources` in the container spec. A container exceeding its memory limit is OOMKilled; CPU is throttled, not killed.",
+      "code_example": "resources:\n  requests:\n    cpu: \"250m\"\n    memory: \"128Mi\"\n  limits:\n    cpu: \"500m\"\n    memory: \"256Mi\"",
+      "difficulty": "medium",
+      "tags": ["resources", "limits", "scheduling"]
+    },
+    {
+      "front": "How do you configure a liveness and readiness probe?",
+      "back": "A **liveness probe** restarts a container if it fails. A **readiness probe** removes the Pod from Service endpoints until it passes. Both support HTTP, TCP, and exec check types. Set appropriate `initialDelaySeconds` to avoid premature failures.",
+      "code_example": "livenessProbe:\n  httpGet:\n    path: /healthz\n    port: 8080\n  initialDelaySeconds: 10\n  periodSeconds: 5\nreadinessProbe:\n  httpGet:\n    path: /ready\n    port: 8080\n  initialDelaySeconds: 5\n  periodSeconds: 3",
+      "difficulty": "medium",
+      "tags": ["pods", "probes", "health"]
+    },
+    {
+      "front": "How do you use an init container?",
+      "back": "**Init containers** run to completion before app containers start. They share the same Pod network and volumes but run sequentially. Use them for setup tasks like waiting for a database or populating a volume.",
+      "code_example": "initContainers:\n  - name: wait-for-db\n    image: busybox\n    command: ['sh', '-c', 'until nc -z db 5432; do sleep 2; done']\ncontainers:\n  - name: app\n    image: my-app:latest",
+      "difficulty": "medium",
+      "tags": ["pods", "init-containers", "lifecycle"]
+    },
+    {
+      "front": "How do you expose a Deployment via a NodePort Service?",
+      "back": "A **NodePort** Service allocates a port (30000–32767) on every node. External traffic hits `<NodeIP>:<NodePort>` and is forwarded to the Service's ClusterIP. It is useful for testing but not recommended for production.",
+      "code_example": "kubectl expose deployment nginx --type=NodePort --port=80\nkubectl get service nginx\n# NodePort is shown under PORT(S) as 80:3xxxx/TCP",
+      "difficulty": "medium",
+      "tags": ["services", "networking", "nodeport"]
+    },
+    {
+      "front": "How do you configure a Horizontal Pod Autoscaler (HPA)?",
+      "back": "An **HPA** automatically scales Deployment/ReplicaSet replicas based on CPU utilization or custom metrics. The metrics-server must be installed. It checks metrics every 15s and adjusts replicas within the configured min/max range.",
+      "code_example": "kubectl autoscale deployment nginx --cpu-percent=50 --min=2 --max=10\nkubectl get hpa\nkubectl describe hpa nginx",
+      "difficulty": "medium",
+      "tags": ["hpa", "autoscaling"]
+    },
+    {
+      "front": "How do you apply taints and tolerations?",
+      "back": "**Taints** mark a node so that Pods without matching **tolerations** are not scheduled on it. Effects are `NoSchedule`, `PreferNoSchedule`, or `NoExecute`. Use them to reserve nodes for specific workloads.",
+      "code_example": "# Taint a node\nkubectl taint nodes node1 dedicated=gpu:NoSchedule\n# Toleration in pod spec\ntolerations:\n  - key: \"dedicated\"\n    operator: \"Equal\"\n    value: \"gpu\"\n    effect: \"NoSchedule\"",
+      "difficulty": "medium",
+      "tags": ["scheduling", "taints", "tolerations"]
+    },
+    {
+      "front": "How does Kubernetes DNS work for Services?",
+      "back": "CoreDNS (the in-cluster DNS server) creates A records for each Service at `<service>.<namespace>.svc.cluster.local`. Pods resolve service names using the cluster DNS configured in `/etc/resolv.conf`. Short names work within the same namespace.",
+      "code_example": "# From a pod in the same namespace:\ncurl http://my-svc\n# From a different namespace:\ncurl http://my-svc.other-ns.svc.cluster.local\n# Check resolv.conf inside a pod:\nkubectl exec my-pod -- cat /etc/resolv.conf",
+      "difficulty": "medium",
+      "tags": ["dns", "networking", "services"]
+    },
+    {
+      "front": "How do you create and use an Ingress resource?",
+      "back": "An **Ingress** exposes HTTP/HTTPS routes from outside the cluster to internal Services. It requires an Ingress controller (e.g., NGINX, Traefik) to be deployed. Rules match on hostname and path.",
+      "code_example": "apiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: my-ingress\n  annotations:\n    nginx.ingress.kubernetes.io/rewrite-target: /\nspec:\n  rules:\n    - host: app.example.com\n      http:\n        paths:\n          - path: /api\n            pathType: Prefix\n            backend:\n              service:\n                name: api-svc\n                port:\n                  number: 80",
+      "difficulty": "medium",
+      "tags": ["ingress", "networking"]
+    },
+    {
+      "front": "How do you grant a Pod permission to read Secrets via RBAC?",
+      "back": "Create a **Role** with the required verbs on the `secrets` resource, then bind it to the Pod's ServiceAccount via a **RoleBinding**. This follows the principle of least privilege.",
+      "code_example": "kubectl create role secret-reader --verb=get,list --resource=secrets\nkubectl create rolebinding read-secrets   --role=secret-reader   --serviceaccount=default:my-sa\nkubectl auth can-i get secrets --as=system:serviceaccount:default:my-sa",
+      "difficulty": "medium",
+      "tags": ["rbac", "security", "serviceaccounts"]
+    },
+    {
+      "front": "How do you debug a Pod stuck in CrashLoopBackOff?",
+      "back": "Check logs with `kubectl logs` (add `--previous` for the crashed container). Use `kubectl describe pod` to inspect events and exit codes. Common causes: misconfigured entrypoint, missing env vars, OOMKilled, or failed health probes.",
+      "code_example": "kubectl logs my-pod --previous\nkubectl describe pod my-pod\n# Check exit code in describe output: \"Exit Code: 1\"\n# OOMKilled = 137, override entrypoint to debug:\nkubectl run debug --image=my-app -- sleep 3600\nkubectl exec -it debug -- sh",
+      "difficulty": "medium",
+      "tags": ["debugging", "pods", "crashloopbackoff"]
+    },
+    {
+      "front": "How do you use a NetworkPolicy to restrict Pod-to-Pod traffic?",
+      "back": "A **NetworkPolicy** uses label selectors to allow or deny ingress/egress traffic at the Pod level. By default all traffic is allowed; creating any NetworkPolicy for a Pod makes all other traffic denied unless explicitly allowed. Requires a CNI that enforces policies (e.g., Calico, Cilium).",
+      "code_example": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-api-only\nspec:\n  podSelector:\n    matchLabels:\n      app: db\n  ingress:\n    - from:\n        - podSelector:\n            matchLabels:\n              app: api\n      ports:\n        - port: 5432",
+      "difficulty": "medium",
+      "tags": ["networkpolicy", "networking", "security"]
+    },
+    {
+      "front": "What is a headless Service and when do you use it?",
+      "back": "A **headless Service** has `clusterIP: None`. DNS returns individual Pod IPs instead of a single virtual IP. StatefulSets use them to give each Pod a stable, addressable DNS name (e.g., `pod-0.my-svc.ns.svc.cluster.local`).",
+      "code_example": "apiVersion: v1\nkind: Service\nmetadata:\n  name: my-headless\nspec:\n  clusterIP: None\n  selector:\n    app: stateful-app\n  ports:\n    - port: 3306",
+      "difficulty": "medium",
+      "tags": ["services", "headless", "statefulsets"]
+    },
+    {
+      "front": "How do you configure node affinity for a Pod?",
+      "back": "**Node affinity** uses label selectors to constrain which nodes a Pod can be scheduled on. `requiredDuringSchedulingIgnoredDuringExecution` is a hard requirement; `preferredDuringSchedulingIgnoredDuringExecution` is a soft preference.",
+      "code_example": "affinity:\n  nodeAffinity:\n    requiredDuringSchedulingIgnoredDuringExecution:\n      nodeSelectorTerms:\n        - matchExpressions:\n            - key: kubernetes.io/arch\n              operator: In\n              values:\n                - amd64",
+      "difficulty": "medium",
+      "tags": ["scheduling", "node-affinity"]
+    },
+    {
+      "front": "How do you dynamically provision storage using a StorageClass?",
+      "back": "A **StorageClass** defines the provisioner and parameters for dynamic volume creation. When a PVC references a StorageClass, the provisioner automatically creates a PV. The `default` StorageClass is used if no class is specified in the PVC.",
+      "code_example": "apiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\n  name: fast\nprovisioner: ebs.csi.aws.com\nparameters:\n  type: gp3\n---\n# PVC referencing it:\nspec:\n  storageClassName: fast\n  accessModes: [ReadWriteOnce]\n  resources:\n    requests:\n      storage: 20Gi",
+      "difficulty": "medium",
+      "tags": ["storage", "storageclasses", "pvc"]
+    },
+    {
+      "front": "How do you update a Secret without restarting Pods?",
+      "back": "Secrets mounted as volumes are refreshed automatically (with up to a 1-minute delay controlled by `kubelet`'s `syncFrequency`). Secrets injected as environment variables are **not** updated live — the Pod must be restarted. Consider using a sidecar or tool like Reloader for env-var-based configs.",
+      "code_example": "kubectl create secret generic my-secret   --from-literal=key=newvalue   --dry-run=client -o yaml | kubectl apply -f -\n# Force rolling restart to pick up env var secrets:\nkubectl rollout restart deployment/my-app",
+      "difficulty": "medium",
+      "tags": ["secrets", "configuration", "lifecycle"]
+    },
+    {
+      "front": "What is a PodDisruptionBudget and why is it important?",
+      "back": "A **PodDisruptionBudget** (PDB) limits the number of Pods of a replicated application that can be voluntarily disrupted at one time. It protects availability during node drains, upgrades, and scaling operations.",
+      "code_example": "apiVersion: policy/v1\nkind: PodDisruptionBudget\nmetadata:\n  name: my-pdb\nspec:\n  minAvailable: 2\n  selector:\n    matchLabels:\n      app: my-app\n# kubectl drain will respect this budget",
+      "difficulty": "medium",
+      "tags": ["pdb", "availability", "scheduling"]
+    },
+    {
+      "front": "How do you use Helm to install and upgrade a chart?",
+      "back": "**Helm** is the Kubernetes package manager. `helm install` deploys a release; `helm upgrade` updates it. You can override default values with `--set` or a custom values file. Use `helm rollback` to revert a release.",
+      "code_example": "helm repo add bitnami https://charts.bitnami.com/bitnami\nhelm install my-nginx bitnami/nginx\nhelm upgrade my-nginx bitnami/nginx --set replicaCount=3\nhelm rollback my-nginx 1\nhelm list",
+      "difficulty": "medium",
+      "tags": ["helm", "packaging"]
+    },
+    {
+      "front": "How do you add a sidecar container to a Pod?",
+      "back": "Define multiple containers in the Pod spec. They share the same network namespace (same IP) and can share volumes. Common sidecars include log shippers, service mesh proxies (Envoy/Istio), and secrets injectors.",
+      "code_example": "containers:\n  - name: app\n    image: my-app:latest\n    ports:\n      - containerPort: 8080\n  - name: log-shipper\n    image: fluent/fluent-bit:latest\n    volumeMounts:\n      - name: app-logs\n        mountPath: /var/log/app\nvolumes:\n  - name: app-logs\n    emptyDir: {}",
+      "difficulty": "medium",
+      "tags": ["pods", "sidecar", "patterns"]
+    },
+    {
+      "front": "How do you view and interpret kubectl top output?",
+      "back": "`kubectl top` shows real-time CPU and memory usage from the **metrics-server**. CPU is shown in millicores (`m`), memory in bytes. Compare against configured limits to identify resource pressure or over-provisioning.",
+      "code_example": "kubectl top nodes\nkubectl top pods --sort-by=memory\nkubectl top pods --containers -n production",
+      "difficulty": "medium",
+      "tags": ["monitoring", "kubectl", "resources"]
+    },
+    {
+      "front": "Explain how Kubernetes scheduler scoring and filtering works when placing a Pod.",
+      "back": "Scheduling happens in two phases: **Filter** eliminates nodes that don't meet hard constraints (resource availability, taints, node affinity, PodFitsHostPorts). **Score** ranks remaining nodes using weighted plugins (LeastAllocated, InterPodAffinity, ImageLocality). The node with the highest total score wins. Custom schedulers or scheduler extenders can inject custom logic.",
+      "code_example": "# Inspect scheduler decisions via events\nkubectl describe pod pending-pod | grep -A5 Events\n# Enable verbose scheduler logging\nkubectl logs -n kube-system kube-scheduler-<node> --v=10 | grep \"Attempting\"",
+      "difficulty": "hard",
+      "tags": ["scheduler", "internals", "scheduling"]
+    },
+    {
+      "front": "What happens during Pod preemption and how does priority affect it?",
+      "back": "When a high-priority Pod cannot be scheduled, the scheduler looks for nodes where evicting lower-priority Pods would free enough resources. The preempted Pods receive a graceful termination period. **PriorityClasses** define integer priorities; the `preemptionPolicy: Never` option disables preemption for a class. PDBs are respected during preemption where possible.",
+      "code_example": "apiVersion: scheduling.k8s.io/v1\nkind: PriorityClass\nmetadata:\n  name: high-priority\nvalue: 1000000\nglobalDefault: false\npreemptionPolicy: PreemptLowerPriority\n---\n# In pod spec:\nspec:\n  priorityClassName: high-priority",
+      "difficulty": "hard",
+      "tags": ["scheduling", "priority", "preemption"]
+    },
+    {
+      "front": "How does etcd store Kubernetes state and what are the implications for cluster reliability?",
+      "back": "All Kubernetes objects are serialized (protobuf) and stored in **etcd**, a distributed key-value store using the Raft consensus algorithm. Write quorum requires (n/2)+1 nodes, so a 3-node cluster tolerates 1 failure. etcd performance directly impacts API latency. You must back up etcd snapshots regularly and never let disk latency exceed ~10ms.",
+      "code_example": "# Create an etcd snapshot\nETCDCTL_API=3 etcdctl snapshot save /backup/etcd.db   --endpoints=https://127.0.0.1:2379   --cacert=/etc/kubernetes/pki/etcd/ca.crt   --cert=/etc/kubernetes/pki/etcd/server.crt   --key=/etc/kubernetes/pki/etcd/server.key\n# Verify\netcdctl snapshot status /backup/etcd.db",
+      "difficulty": "hard",
+      "tags": ["etcd", "control-plane", "reliability"]
+    },
+    {
+      "front": "How do you implement a zero-downtime canary deployment in Kubernetes without a service mesh?",
+      "back": "Deploy a second Deployment (canary) with a small replica count sharing the same Service label selector. The Service load-balances proportionally to replica counts. Monitor error rates, then scale up canary and scale down stable. Use separate labels (e.g., `track: canary`) to observe them independently.",
+      "code_example": "# stable: 9 replicas, canary: 1 replica → ~10% traffic to canary\nkubectl scale deployment my-app-stable --replicas=9\nkubectl scale deployment my-app-canary --replicas=1\n# Both match the Service selector: app=my-app\nkubectl get pods -l app=my-app",
+      "difficulty": "hard",
+      "tags": ["deployments", "canary", "patterns"]
+    },
+    {
+      "front": "How do you debug a node that is NotReady?",
+      "back": "Check `kubectl describe node` for conditions and taints. SSH into the node and check kubelet logs (`journalctl -u kubelet`). Common causes: disk pressure (eviction), memory pressure, network plugin failure, kubelet crash, or container runtime issues. Check if the node's CNI pod (e.g., calico-node) is Running.",
+      "code_example": "kubectl describe node broken-node | grep -A5 Conditions\n# On the node:\njournalctl -u kubelet --since \"5 min ago\"\nsystemctl status containerd\nls /var/log/pods/\ncrictl pods",
+      "difficulty": "hard",
+      "tags": ["debugging", "nodes", "operations"]
+    },
+    {
+      "front": "How do you build and deploy a Kubernetes Operator using the operator pattern?",
+      "back": "An **Operator** combines a **CRD** (custom schema) with a custom **controller** that reconciles the actual state to the desired state. Use Operator SDK or controller-runtime. The controller watches CRD events via informers and implements a `Reconcile` loop. Deploy the controller as a Deployment with appropriate RBAC.",
+      "code_example": "# Scaffold with operator-sdk\noperator-sdk init --domain example.com --repo github.com/me/my-op\noperator-sdk create api --group app --version v1 --kind MyApp --resource --controller\n# Implement Reconcile(), then:\nmake manifests generate\nmake docker-build docker-push IMG=my-op:latest\nmake deploy IMG=my-op:latest",
+      "difficulty": "hard",
+      "tags": ["operators", "crds", "extensibility"]
+    },
+    {
+      "front": "What is VPA and how does it interact with HPA? What pitfalls should you avoid?",
+      "back": "**VPA** (Vertical Pod Autoscaler) adjusts container CPU/memory requests based on historical usage. Running VPA and HPA on the same Deployment with CPU metrics causes conflicts — VPA changes requests, which alters HPA's utilization percentage, creating oscillation. Safe pattern: use HPA for scaling on custom/external metrics, VPA in `Off` or `Initial` mode for right-sizing only, or use VPA for CPU/memory and HPA for custom metrics.",
+      "code_example": "apiVersion: autoscaling.k8s.io/v1\nkind: VerticalPodAutoscaler\nmetadata:\n  name: my-vpa\nspec:\n  targetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: my-app\n  updatePolicy:\n    updateMode: \"Auto\"   # or \"Initial\" to avoid live evictions",
+      "difficulty": "hard",
+      "tags": ["vpa", "hpa", "autoscaling"]
+    },
+    {
+      "front": "How does the kube-apiserver handle admission and what are the two types of admission webhooks?",
+      "back": "After authentication and authorization, API requests pass through the **Admission** phase. **MutatingAdmissionWebhooks** can modify the object (e.g., inject sidecars). **ValidatingAdmissionWebhooks** can accept or reject it. Mutations happen before validation. If a webhook is unreachable, the `failurePolicy` (`Fail` or `Ignore`) determines whether the request is blocked.",
+      "code_example": "# List webhook configs\nkubectl get mutatingwebhookconfigurations\nkubectl get validatingwebhookconfigurations\n# Bypass a failing webhook temporarily (emergency):\nkubectl delete mutatingwebhookconfiguration <name>",
+      "difficulty": "hard",
+      "tags": ["apiserver", "admission", "security"]
+    },
+    {
+      "front": "How do you configure Pod Security Standards (PSS) in Kubernetes 1.25+?",
+      "back": "PSS replaced PodSecurityPolicy. Apply security profiles (`privileged`, `baseline`, `restricted`) at the **namespace** level using labels. Modes are `enforce` (reject), `audit` (log), and `warn` (warn). The `restricted` profile blocks hostNetwork, privileged containers, and requires non-root users.",
+      "code_example": "kubectl label namespace my-ns   pod-security.kubernetes.io/enforce=restricted   pod-security.kubernetes.io/enforce-version=v1.28   pod-security.kubernetes.io/warn=restricted\n# Test a violating pod:\nkubectl run priv --image=nginx --privileged -n my-ns",
+      "difficulty": "hard",
+      "tags": ["security", "pod-security", "namespaces"]
+    },
+    {
+      "front": "How do you debug OOMKilled containers systematically?",
+      "back": "OOMKilled (exit code 137) means the container exceeded its memory limit. First check `kubectl describe pod` for `OOMKilled` in the Last State. Compare `limits.memory` with actual usage via `kubectl top`. Add a startup buffer, use VPA recommendations, or profile the app for memory leaks. Also check node-level pressure via `kubectl describe node` — node OOM kills any container even without limits.",
+      "code_example": "kubectl describe pod oom-pod | grep -A3 \"Last State\"\nkubectl top pod oom-pod --containers\n# Check node memory pressure:\nkubectl describe node | grep -A5 \"MemoryPressure\"\n# Stream memory usage:\nkubectl exec -it oom-pod -- cat /sys/fs/cgroup/memory/memory.usage_in_bytes",
+      "difficulty": "hard",
+      "tags": ["debugging", "oom", "resources"]
+    },
+    {
+      "front": "Explain Kubernetes CNI and how network plugins enforce NetworkPolicies.",
+      "back": "The **Container Network Interface (CNI)** is a standard API for network plugins to configure Pod networking. The kubelet calls the CNI binary to set up network interfaces for each Pod. Not all CNI plugins enforce NetworkPolicies — Flannel does not; **Calico**, **Cilium**, and **Weave** do. Cilium uses eBPF for in-kernel enforcement without iptables overhead.",
+      "code_example": "# Check installed CNI plugin\nls /etc/cni/net.d/\ncat /etc/cni/net.d/10-calico.conflist\n# Calico: verify NetworkPolicy enforcement\nkubectl get networkpolicies --all-namespaces\ncalicoctl get globalnetworkpolicies",
+      "difficulty": "hard",
+      "tags": ["cni", "networking", "networkpolicy"]
+    },
+    {
+      "front": "How do you implement a StatefulSet with automatic volume provisioning and ordered rolling updates?",
+      "back": "StatefulSets use `volumeClaimTemplates` to provision a unique PVC per Pod. Pods are updated in reverse order (N-1 to 0) with `updateStrategy: RollingUpdate`. Use `partition` to implement canary updates — only Pods with index ≥ partition are updated. Headless Service provides stable DNS names.",
+      "code_example": "apiVersion: apps/v1\nkind: StatefulSet\nspec:\n  updateStrategy:\n    type: RollingUpdate\n    rollingUpdate:\n      partition: 2  # Only update pod-2 and above\n  volumeClaimTemplates:\n    - metadata:\n        name: data\n      spec:\n        storageClassName: fast\n        accessModes: [ReadWriteOnce]\n        resources:\n          requests:\n            storage: 10Gi",
+      "difficulty": "hard",
+      "tags": ["statefulsets", "storage", "updates"]
+    },
+    {
+      "front": "How do you secure etcd in a production Kubernetes cluster?",
+      "back": "etcd must use **mutual TLS** (client + server certs). Encrypt sensitive data at rest using an `EncryptionConfiguration` manifest applied to the API server. Restrict network access so only the API server can reach etcd (firewall rules). Rotate credentials regularly and audit etcd access logs.",
+      "code_example": "# EncryptionConfiguration for Secrets\napiVersion: apiserver.config.k8s.io/v1\nkind: EncryptionConfiguration\nresources:\n  - resources:\n      - secrets\n    providers:\n      - aescbc:\n          keys:\n            - name: key1\n              secret: <base64-encoded-32-byte-key>\n      - identity: {}\n# Apply via kube-apiserver flag:\n# --encryption-provider-config=/etc/kubernetes/encryption.yaml",
+      "difficulty": "hard",
+      "tags": ["etcd", "security", "encryption"]
+    },
+    {
+      "front": "What is controller-manager and how does the reconciliation loop work?",
+      "back": "The **kube-controller-manager** runs built-in controllers (Deployment, ReplicaSet, Job, etc.) in a single binary. Each controller uses an **informer** (shared cache + watch) to track resource state. The reconciliation loop compares desired state (spec) with actual state, computes a diff, and takes corrective action — running indefinitely until they match.",
+      "code_example": "# Check controller manager logs\nkubectl logs -n kube-system kube-controller-manager-<node>\n# Increase verbosity for reconciliation tracing\n--v=4 flag in kube-controller-manager manifest",
+      "difficulty": "hard",
+      "tags": ["controller-manager", "control-plane", "internals"]
+    },
+    {
+      "front": "How do you handle secret rotation for a running application in Kubernetes without downtime?",
+      "back": "Mount secrets as **volumes** (not env vars) so kubelet refreshes them without a Pod restart. Use a sidecar that polls for changes and signals the app process (SIGHUP). For env vars, trigger a `kubectl rollout restart` via a GitOps pipeline or an external secrets operator (External Secrets Operator, Vault Agent Injector) that automates rotation.",
+      "code_example": "# External Secrets Operator example\napiVersion: external-secrets.io/v1beta1\nkind: ExternalSecret\nmetadata:\n  name: db-secret\nspec:\n  refreshInterval: 1h\n  secretStoreRef:\n    name: vault-backend\n    kind: SecretStore\n  target:\n    name: db-secret\n  data:\n    - secretKey: password\n      remoteRef:\n        key: secret/db\n        property: password",
+      "difficulty": "hard",
+      "tags": ["secrets", "security", "operations"]
+    },
+    {
+      "front": "How do you troubleshoot a Service that is not routing traffic to its Pods?",
+      "back": "Check that Pod labels match the Service selector exactly (`kubectl describe svc`). Verify Endpoints object is populated (`kubectl get endpoints my-svc`). If empty, labels don't match or Pods aren't Ready. Check readiness probes. Also verify kube-proxy iptables/IPVS rules and that targetPort matches the container's actual port.",
+      "code_example": "kubectl describe svc my-svc | grep -E \"Selector|Endpoints\"\nkubectl get endpoints my-svc\n# Debug from inside cluster:\nkubectl run tmp --image=busybox --restart=Never -- wget -qO- http://my-svc\n# Check iptables rules on a node:\niptables-save | grep my-svc",
+      "difficulty": "hard",
+      "tags": ["debugging", "services", "networking"]
+    },
+    {
+      "front": "How does kube-proxy implement Service load balancing and what are the differences between iptables and IPVS modes?",
+      "back": "**iptables mode**: kube-proxy installs iptables DNAT rules for each Service endpoint. Random selection scales O(n) per packet for n endpoints. **IPVS mode**: uses in-kernel hash tables for O(1) load balancing with richer algorithms (round-robin, least-conn, etc.). IPVS is preferred at scale (1000+ Services) as iptables rule updates become a bottleneck.",
+      "code_example": "# Check current kube-proxy mode\nkubectl get configmap kube-proxy -n kube-system -o yaml | grep mode\n# Switch to IPVS mode (kubeadm cluster):\nkubectl edit configmap kube-proxy -n kube-system\n# Set mode: \"ipvs\"\n# Restart kube-proxy pods:\nkubectl rollout restart daemonset/kube-proxy -n kube-system",
+      "difficulty": "hard",
+      "tags": ["kube-proxy", "networking", "performance"]
+    },
+    {
+      "front": "How do you build a multi-tenant Kubernetes cluster with strong isolation?",
+      "back": "Use **Namespaces** + **RBAC** for soft isolation. Add **NetworkPolicies** to block cross-namespace traffic. Enforce **Pod Security Standards** (restricted profile). Apply **ResourceQuotas** and **LimitRanges** per namespace to prevent noisy-neighbor issues. For hard isolation, use separate node pools with taints/tolerations per tenant, or a separate control plane (virtual clusters via vcluster).",
+      "code_example": "# ResourceQuota per tenant namespace\napiVersion: v1\nkind: ResourceQuota\nmetadata:\n  name: tenant-quota\nspec:\n  hard:\n    pods: \"20\"\n    requests.cpu: \"4\"\n    requests.memory: 8Gi\n    limits.cpu: \"8\"\n    limits.memory: 16Gi",
+      "difficulty": "hard",
+      "tags": ["multitenancy", "security", "namespaces"]
+    },
+    {
+      "front": "Explain how the Kubernetes garbage collector works and what ownerReferences do.",
+      "back": "**ownerReferences** establish parent-child relationships between objects (e.g., ReplicaSet → Pod). When a parent is deleted, the **garbage collector** controller cascades deletion to dependents. **Foreground deletion** waits for all dependents to be deleted first. **Background deletion** (default) deletes the owner immediately and cleans up orphans asynchronously. Use `--cascade=orphan` to detach without deleting.",
+      "code_example": "# View ownerReferences\nkubectl get pod my-pod -o jsonpath='{.metadata.ownerReferences}'\n# Delete deployment but orphan its pods\nkubectl delete deployment my-app --cascade=orphan\n# Foreground deletion (blocks until all pods gone)\nkubectl delete deployment my-app --cascade=foreground",
+      "difficulty": "hard",
+      "tags": ["internals", "garbage-collection", "lifecycle"]
+    },
+    {
+      "front": "How do you implement cluster autoscaling and what are its interaction risks with PDBs and spot instances?",
+      "back": "The **Cluster Autoscaler** (CA) adds nodes when Pods are Pending due to resource constraints and removes underutilized nodes. PDBs can block node drain if too many Pods of a deployment are on the same node. Spot instance interruptions trigger node removal; ensure Pods tolerate this with graceful shutdown and PodDisruptionBudgets. Set `cluster-autoscaler.kubernetes.io/safe-to-evict: \"true\"` on non-critical Pods to unblock scale-down.",
+      "code_example": "# Annotate low-priority pods to allow eviction\nkubectl annotate pod batch-job   cluster-autoscaler.kubernetes.io/safe-to-evict=\"true\"\n# Check CA logs:\nkubectl logs -n kube-system -l app=cluster-autoscaler\n# Scale-down disabled on a node:\nkubectl annotate node my-node cluster-autoscaler.kubernetes.io/scale-down-disabled=\"true\"",
+      "difficulty": "hard",
+      "tags": ["autoscaling", "cluster-autoscaler", "operations"]
+    }
+  ],
+  "docker_cards": [
+    {
+      "front": "What is a Docker image?",
+      "back": "A **Docker image** is a read-only, layered filesystem snapshot used to create containers. Each instruction in a Dockerfile creates a new layer. Images are identified by a name and tag (e.g., `nginx:1.25`).",
+      "code_example": "docker images\ndocker pull nginx:1.25\ndocker inspect nginx:1.25",
+      "difficulty": "easy",
+      "tags": ["images", "fundamentals"]
+    },
+    {
+      "front": "What is a Docker layer and why does it matter?",
+      "back": "Each Dockerfile instruction (`RUN`, `COPY`, etc.) creates an immutable **layer** on top of the previous one. Layers are shared and cached across images. Ordering instructions from least to most frequently changed maximizes **build cache** reuse and reduces build times.",
+      "code_example": "docker history nginx:1.25\n# Shows all layers and their sizes",
+      "difficulty": "easy",
+      "tags": ["images", "layers", "build-cache"]
+    },
+    {
+      "front": "What is the difference between CMD and ENTRYPOINT in a Dockerfile?",
+      "back": "**ENTRYPOINT** defines the executable that always runs. **CMD** provides default arguments to ENTRYPOINT, or the default command if ENTRYPOINT is not set. CMD is overridden by arguments passed to `docker run`. Use `ENTRYPOINT` + `CMD` together for flexible, overridable defaults.",
+      "code_example": "# exec form (preferred)\nENTRYPOINT [\"node\"]\nCMD [\"server.js\"]\n# docker run myapp app.js  → runs: node app.js\n# docker run myapp         → runs: node server.js",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "entrypoint", "cmd"]
+    },
+    {
+      "front": "What does the COPY instruction do versus ADD?",
+      "back": "**COPY** copies files/directories from the build context into the image. **ADD** does the same but also supports auto-extracting tar archives and fetching remote URLs. Prefer `COPY` for simple file copies — `ADD`'s extra behavior can be surprising and harder to reason about.",
+      "code_example": "# Prefer COPY for local files\nCOPY ./app /app\n# Use ADD only for tar extraction\nADD archive.tar.gz /opt/",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "copy", "add"]
+    },
+    {
+      "front": "What is the .dockerignore file?",
+      "back": "**.dockerignore** lists files and directories to exclude from the build context sent to the Docker daemon. Excluding large files (e.g., `.git`, `node_modules`, test data) dramatically reduces build context size and prevents accidental secret leaks.",
+      "code_example": "# .dockerignore\n.git\nnode_modules\n*.log\n.env\ntests/\nREADME.md",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "build", "best-practices"]
+    },
+    {
+      "front": "What does docker run -d do?",
+      "back": "`-d` runs the container in **detached mode** (background). The container runs independently of the terminal session. Use `docker logs <id>` to view output and `docker stop <id>` to stop it.",
+      "code_example": "docker run -d --name my-nginx -p 8080:80 nginx\ndocker logs my-nginx\ndocker stop my-nginx",
+      "difficulty": "easy",
+      "tags": ["containers", "docker-run", "fundamentals"]
+    },
+    {
+      "front": "What is a named volume in Docker?",
+      "back": "A **named volume** is a Docker-managed persistent storage area stored under `/var/lib/docker/volumes/`. Unlike bind mounts, named volumes are portable, easy to back up, and work consistently on all platforms.",
+      "code_example": "docker volume create my-data\ndocker run -v my-data:/app/data nginx\ndocker volume inspect my-data\ndocker volume ls",
+      "difficulty": "easy",
+      "tags": ["volumes", "storage"]
+    },
+    {
+      "front": "What is the difference between a bridge network and a host network in Docker?",
+      "back": "The **bridge** network (default) gives each container its own network namespace and a private IP. Containers communicate via the bridge; external access requires port mapping. The **host** network shares the host's network namespace — no isolation, no port mapping needed, best performance.",
+      "code_example": "# Bridge (default):\ndocker run --network bridge -p 8080:80 nginx\n# Host:\ndocker run --network host nginx\n# No -p needed with host network",
+      "difficulty": "easy",
+      "tags": ["networking", "bridge", "host"]
+    },
+    {
+      "front": "What does EXPOSE do in a Dockerfile?",
+      "back": "**EXPOSE** documents which ports the container listens on. It does **not** actually publish the port — that requires `-p` in `docker run`. It serves as metadata for operators and tools like Docker Compose.",
+      "code_example": "EXPOSE 8080\n# Actual publishing at runtime:\ndocker run -p 8080:8080 my-app",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "networking", "expose"]
+    },
+    {
+      "front": "What is Docker Compose and what problem does it solve?",
+      "back": "**Docker Compose** uses a `compose.yaml` file to define and run multi-container applications. It handles service ordering, shared networks, volumes, and environment variables in a single declarative file — replacing long `docker run` commands.",
+      "code_example": "docker compose up -d\ndocker compose down\ndocker compose logs -f\ndocker compose ps",
+      "difficulty": "easy",
+      "tags": ["compose", "fundamentals"]
+    },
+    {
+      "front": "What is the FROM instruction in a Dockerfile?",
+      "back": "**FROM** sets the base image for subsequent instructions. Every Dockerfile must start with `FROM`. Use `FROM scratch` for minimal images (static binaries) or `FROM alpine` for a small Linux base. In multi-stage builds, multiple `FROM` statements are used.",
+      "code_example": "FROM node:20-alpine AS builder\n# ... build stage ...\nFROM node:20-alpine\nCOPY --from=builder /app/dist /app",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "base-images", "from"]
+    },
+    {
+      "front": "What does the ENV instruction do in a Dockerfile?",
+      "back": "**ENV** sets environment variables that persist in the container at runtime. They are available to all subsequent RUN, CMD, and ENTRYPOINT instructions. Use **ARG** instead if the value is only needed at build time.",
+      "code_example": "ENV NODE_ENV=production\nENV PORT=8080\n# Override at runtime:\ndocker run -e NODE_ENV=development my-app",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "environment", "env"]
+    },
+    {
+      "front": "What is the ARG instruction in a Dockerfile?",
+      "back": "**ARG** defines build-time variables passed with `--build-arg`. Unlike `ENV`, ARG values are not persisted in the final image. Use ARG for version pinning or build configuration that shouldn't be visible at runtime.",
+      "code_example": "ARG APP_VERSION=1.0.0\nRUN echo \"Building version $APP_VERSION\"\n# Build:\ndocker build --build-arg APP_VERSION=2.0.0 .",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "build", "arg"]
+    },
+    {
+      "front": "How do you list all running and stopped containers?",
+      "back": "`docker ps` shows running containers. `docker ps -a` shows all containers including stopped ones. Use `-q` to output only container IDs (useful for scripting).",
+      "code_example": "docker ps\ndocker ps -a\ndocker ps -a --filter status=exited\ndocker ps -q | xargs docker rm   # remove all stopped",
+      "difficulty": "easy",
+      "tags": ["containers", "docker-cli", "fundamentals"]
+    },
+    {
+      "front": "What does the WORKDIR instruction do?",
+      "back": "**WORKDIR** sets the working directory for all subsequent `RUN`, `CMD`, `ENTRYPOINT`, `COPY`, and `ADD` instructions. It creates the directory if it doesn't exist. Using WORKDIR is cleaner than `RUN cd /app`.",
+      "code_example": "WORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nCMD [\"node\", \"server.js\"]",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "workdir"]
+    },
+    {
+      "front": "What is a bind mount in Docker?",
+      "back": "A **bind mount** maps a specific host filesystem path into the container. Changes are immediately visible on both sides. Useful for development (live code reloading) but less portable than named volumes since it depends on the host path.",
+      "code_example": "docker run -v /host/path:/container/path nginx\n# Development example:\ndocker run -v $(pwd):/app -w /app node:20 npm test",
+      "difficulty": "easy",
+      "tags": ["volumes", "bind-mount", "storage"]
+    },
+    {
+      "front": "What does docker exec do?",
+      "back": "`docker exec` runs a new command inside an already running container. It is commonly used to open a shell for debugging. The process runs in the container's namespace alongside the main process.",
+      "code_example": "docker exec -it my-container bash\ndocker exec my-container env\ndocker exec -u root my-container cat /etc/passwd",
+      "difficulty": "easy",
+      "tags": ["containers", "debugging", "exec"]
+    },
+    {
+      "front": "What is a distroless image?",
+      "back": "**Distroless images** (from Google) contain only the application and its runtime dependencies — no shell, package manager, or other OS utilities. They minimize attack surface and image size. Debug variants (e.g., `:debug` tag) include busybox for troubleshooting.",
+      "code_example": "FROM gcr.io/distroless/java17\nCOPY app.jar /app.jar\nCMD [\"/app.jar\"]\n# Result: no shell, no apt, minimal CVEs",
+      "difficulty": "easy",
+      "tags": ["security", "base-images", "distroless"]
+    },
+    {
+      "front": "What is the USER instruction in a Dockerfile?",
+      "back": "**USER** sets the user (and optionally group) for all subsequent instructions and the container's runtime process. Using a non-root user is a security best practice — if the container is compromised, the attacker has limited host permissions.",
+      "code_example": "RUN addgroup --system appgroup && adduser --system appuser --ingroup appgroup\nUSER appuser:appgroup\nCMD [\"./app\"]",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "security", "user"]
+    },
+    {
+      "front": "What does the HEALTHCHECK instruction do in a Dockerfile?",
+      "back": "**HEALTHCHECK** defines a command Docker runs periodically to test if the container is healthy. If it fails `--retries` times, the container status becomes `unhealthy`. Docker Compose and Swarm can use this to control service restarts.",
+      "code_example": "HEALTHCHECK --interval=30s --timeout=5s --retries=3   CMD curl -f http://localhost:8080/health || exit 1\n# Check status:\ndocker inspect --format='{{.State.Health.Status}}' my-container",
+      "difficulty": "easy",
+      "tags": ["dockerfile", "healthcheck", "operations"]
+    },
+    {
+      "front": "How do you build a multi-stage Docker image to minimize final image size?",
+      "back": "Use multiple `FROM` instructions. Build artifacts in a heavy stage (compiler + dependencies) and `COPY --from=<stage>` only the output into a minimal final stage. This avoids shipping build tools, dramatically reducing image size and attack surface.",
+      "code_example": "FROM golang:1.22 AS builder\nWORKDIR /src\nCOPY go.mod go.sum ./\nRUN go mod download\nCOPY . .\nRUN CGO_ENABLED=0 go build -o /app ./cmd/server\n\nFROM gcr.io/distroless/static\nCOPY --from=builder /app /app\nENTRYPOINT [\"/app\"]",
+      "difficulty": "medium",
+      "tags": ["multi-stage", "dockerfile", "optimization"]
+    },
+    {
+      "front": "How does the Docker build cache work and how do you optimize layer ordering?",
+      "back": "Docker reuses cached layers if the instruction and all previous layers are unchanged. A cache miss invalidates all subsequent layers. Order instructions from **least to most frequently changing**: install dependencies before copying source code. Use `--no-cache` to force a full rebuild.",
+      "code_example": "# Optimized: dependency install cached separately from source changes\nCOPY package*.json ./\nRUN npm ci --production\nCOPY src/ ./src/\n# vs anti-pattern:\nCOPY . .             # cache busted on every source change\nRUN npm ci",
+      "difficulty": "medium",
+      "tags": ["build-cache", "optimization", "dockerfile"]
+    },
+    {
+      "front": "How do you configure Docker Compose to use health checks and service dependencies?",
+      "back": "Use `healthcheck` in the service definition and `depends_on` with `condition: service_healthy`. This ensures dependent services wait until the dependency passes its health check before starting.",
+      "code_example": "services:\n  db:\n    image: postgres:16\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U postgres\"]\n      interval: 10s\n      timeout: 5s\n      retries: 5\n  app:\n    image: my-app\n    depends_on:\n      db:\n        condition: service_healthy",
+      "difficulty": "medium",
+      "tags": ["compose", "healthcheck", "dependencies"]
+    },
+    {
+      "front": "How do you limit memory and CPU for a Docker container?",
+      "back": "Use `--memory` (hard limit) and `--cpus` (fractional CPU cores). If the container exceeds the memory limit, the OOM killer terminates it. `--memory-swap` controls swap usage. In Compose, use the `deploy.resources` key.",
+      "code_example": "docker run --memory=512m --memory-swap=512m --cpus=1.5 nginx\n# In compose.yaml:\nservices:\n  app:\n    image: my-app\n    deploy:\n      resources:\n        limits:\n          cpus: \"1.5\"\n          memory: 512M",
+      "difficulty": "medium",
+      "tags": ["resources", "limits", "operations"]
+    },
+    {
+      "front": "How do you use Docker BuildKit and what advantages does it provide?",
+      "back": "**BuildKit** is the modern Docker build engine. Enable it with `DOCKER_BUILDKIT=1` or in `daemon.json`. Advantages: parallel stage execution, improved cache (remote cache), mount secrets without baking them into layers, and SSH forwarding for private dependencies.",
+      "code_example": "# Enable BuildKit\nDOCKER_BUILDKIT=1 docker build -t my-app .\n# Or globally in /etc/docker/daemon.json:\n{ \"features\": { \"buildkit\": true } }\n# Mount a secret without leaking it:\nRUN --mount=type=secret,id=npmrc,dst=/root/.npmrc npm install",
+      "difficulty": "medium",
+      "tags": ["buildkit", "build", "security"]
+    },
+    {
+      "front": "How do you scan a Docker image for vulnerabilities?",
+      "back": "Use **Docker Scout** (`docker scout cves`) or **Trivy** for image vulnerability scanning. These tools analyze installed packages against CVE databases. Integrate scanning into CI pipelines and block builds on critical CVEs.",
+      "code_example": "# Docker Scout (built in)\ndocker scout cves nginx:1.25\ndocker scout recommendations nginx:1.25\n# Trivy (standalone)\ntrivy image nginx:1.25\ntrivy image --exit-code 1 --severity CRITICAL nginx:1.25",
+      "difficulty": "medium",
+      "tags": ["security", "scanning", "vulnerabilities"]
+    },
+    {
+      "front": "How do you configure Docker logging drivers?",
+      "back": "Docker's default logging driver is `json-file`. Production setups typically use `awslogs`, `gelf`, `fluentd`, or `splunk`. Configure globally in `daemon.json` or per container with `--log-driver`. Use `--log-opt` for driver-specific options.",
+      "code_example": "# Per container:\ndocker run --log-driver=awslogs   --log-opt awslogs-region=us-east-1   --log-opt awslogs-group=my-app nginx\n# In daemon.json (global default):\n{\n  \"log-driver\": \"json-file\",\n  \"log-opts\": { \"max-size\": \"10m\", \"max-file\": \"3\" }\n}",
+      "difficulty": "medium",
+      "tags": ["logging", "operations"]
+    },
+    {
+      "front": "How do you tag and push an image to a container registry?",
+      "back": "Tag the image with the registry hostname, repository, and tag. Authenticate with `docker login`, then push. Use semantic versioning and also tag with `latest`. Consider digest-pinning in production for reproducibility.",
+      "code_example": "docker build -t my-app:1.2.3 .\ndocker tag my-app:1.2.3 registry.example.com/team/my-app:1.2.3\ndocker tag my-app:1.2.3 registry.example.com/team/my-app:latest\ndocker login registry.example.com\ndocker push registry.example.com/team/my-app:1.2.3\ndocker push registry.example.com/team/my-app:latest",
+      "difficulty": "medium",
+      "tags": ["registry", "tagging", "operations"]
+    },
+    {
+      "front": "How do you use docker inspect to debug a container's configuration?",
+      "back": "`docker inspect` returns the full JSON configuration of a container or image. Use Go template `-f` flags to extract specific fields. Useful for checking mounts, network settings, environment variables, and health status.",
+      "code_example": "docker inspect my-container\ndocker inspect -f '{{.NetworkSettings.IPAddress}}' my-container\ndocker inspect -f '{{json .Mounts}}' my-container | python3 -m json.tool\ndocker inspect -f '{{.State.Health.Status}}' my-container",
+      "difficulty": "medium",
+      "tags": ["debugging", "inspect", "docker-cli"]
+    },
+    {
+      "front": "How do you use Docker Compose overrides for environment-specific configuration?",
+      "back": "Compose merges `compose.yaml` with `compose.override.yaml` automatically. Use separate override files (`compose.prod.yaml`) specified with `-f` for production. This keeps base config DRY while allowing environment-specific overrides.",
+      "code_example": "# compose.yaml - base\nservices:\n  app:\n    image: my-app:latest\n    ports: [\"8080:8080\"]\n\n# compose.override.yaml - dev overrides (auto-loaded)\nservices:\n  app:\n    build: .\n    volumes:\n      - .:/app\n    environment:\n      - NODE_ENV=development\n\n# Production:\ndocker compose -f compose.yaml -f compose.prod.yaml up -d",
+      "difficulty": "medium",
+      "tags": ["compose", "configuration", "environments"]
+    },
+    {
+      "front": "How do you use tmpfs mounts and when are they useful?",
+      "back": "A **tmpfs mount** is stored in the host's RAM, not on disk. Use it for ephemeral sensitive data (e.g., credentials, session data) that should never touch disk and doesn't need to persist after the container stops.",
+      "code_example": "docker run --tmpfs /tmp:rw,size=64m nginx\n# In compose.yaml:\nservices:\n  app:\n    image: my-app\n    tmpfs:\n      - /tmp:size=64m\n      - /run",
+      "difficulty": "medium",
+      "tags": ["volumes", "tmpfs", "security"]
+    },
+    {
+      "front": "How do you use docker stats to monitor container resource usage?",
+      "back": "`docker stats` streams real-time CPU, memory, network I/O, and block I/O metrics. Use `--no-stream` for a one-time snapshot. Useful for identifying resource-hungry containers before setting limits.",
+      "code_example": "docker stats\ndocker stats --no-stream\ndocker stats --format \"table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\"\n# All containers including stopped:\ndocker stats $(docker ps -q)",
+      "difficulty": "medium",
+      "tags": ["monitoring", "resources", "operations"]
+    },
+    {
+      "front": "How do you remove dangling images and reclaim disk space?",
+      "back": "Dangling images are untagged layers from intermediate builds. Use `docker image prune` to remove them. `docker system prune` removes all unused containers, networks, images, and optionally volumes. Use `-a` to remove all unused images, not just dangling ones.",
+      "code_example": "docker image prune\ndocker container prune\ndocker volume prune\n# Aggressive cleanup:\ndocker system prune -a --volumes\n# How much space is used:\ndocker system df",
+      "difficulty": "medium",
+      "tags": ["cleanup", "operations", "disk"]
+    },
+    {
+      "front": "How do you configure container security with Linux capabilities?",
+      "back": "By default Docker drops most Linux capabilities. Use `--cap-add` to grant specific capabilities and `--cap-drop ALL` to drop everything before adding back only what's needed. Avoid `--privileged` — it grants full host access.",
+      "code_example": "# Minimal: drop all, add only needed\ndocker run --cap-drop ALL --cap-add NET_BIND_SERVICE nginx\n# Check capabilities of a running container:\ndocker inspect --format='{{.HostConfig.CapAdd}}' my-container\n# In compose.yaml:\ncap_drop:\n  - ALL\ncap_add:\n  - NET_BIND_SERVICE",
+      "difficulty": "medium",
+      "tags": ["security", "capabilities", "linux"]
+    },
+    {
+      "front": "How do you configure an overlay network in Docker for multi-host communication?",
+      "back": "**Overlay networks** span multiple Docker hosts in a Swarm cluster using VXLAN encapsulation. Create the network before the service; containers on different hosts can communicate using container names. Requires Swarm mode initialization.",
+      "code_example": "docker swarm init\ndocker network create --driver overlay my-overlay\ndocker service create --network my-overlay --name api my-api:latest\ndocker service create --network my-overlay --name db postgres:16",
+      "difficulty": "medium",
+      "tags": ["networking", "overlay", "swarm"]
+    },
+    {
+      "front": "How do you use the ONBUILD instruction and when is it appropriate?",
+      "back": "**ONBUILD** registers trigger instructions that run when the image is used as a base in another Dockerfile. Useful for creating reusable base images for teams — the trigger fires when team members `FROM` the base image. Avoid complex logic in ONBUILD as it can confuse downstream users.",
+      "code_example": "# base-node/Dockerfile\nFROM node:20-alpine\nWORKDIR /app\nONBUILD COPY package*.json ./\nONBUILD RUN npm ci\nONBUILD COPY . .\n# When someone does FROM base-node:latest,\n# the ONBUILD instructions run automatically",
+      "difficulty": "medium",
+      "tags": ["dockerfile", "onbuild", "base-images"]
+    },
+    {
+      "front": "How do you run Docker in rootless mode?",
+      "back": "**Rootless Docker** runs the daemon and containers as a non-root user, improving security. Install via `dockerd-rootless-setuptool.sh`. It uses user namespaces, so no root access is needed. Limitations include no `--network host` and some storage driver restrictions.",
+      "code_example": "# Install rootless Docker\ncurl -fsSL https://get.docker.com/rootless | sh\n# Start\nsystemctl --user start docker\n# Set env:\nexport DOCKER_HOST=unix:///run/user/$(id -u)/docker.sock",
+      "difficulty": "medium",
+      "tags": ["security", "rootless", "operations"]
+    },
+    {
+      "front": "How do you use docker volume backup and restore patterns?",
+      "back": "Docker has no built-in backup command. Mount the volume into a temporary container and `tar` the contents to/from stdout. This pattern works with any volume driver and can be piped to remote storage.",
+      "code_example": "# Backup:\ndocker run --rm   -v my-data:/source:ro   -v $(pwd):/backup   alpine tar czf /backup/my-data.tar.gz -C /source .\n\n# Restore:\ndocker run --rm   -v my-data:/target   -v $(pwd):/backup   alpine tar xzf /backup/my-data.tar.gz -C /target",
+      "difficulty": "medium",
+      "tags": ["volumes", "backup", "operations"]
+    },
+    {
+      "front": "What is the difference between RUN, CMD, and ENTRYPOINT in shell vs exec form?",
+      "back": "**Shell form** (`CMD echo hello`) spawns `/bin/sh -c`. **Exec form** (`CMD [\"echo\", \"hello\"]`) runs the binary directly without a shell — signals (SIGTERM) are delivered to PID 1, making graceful shutdown work correctly. Always prefer exec form for ENTRYPOINT/CMD to ensure proper signal handling.",
+      "code_example": "# Shell form - PID 1 is /bin/sh, not your app\nCMD node server.js\n\n# Exec form - PID 1 is node, receives SIGTERM directly\nCMD [\"node\", \"server.js\"]\n\n# Verify PID 1:\ndocker exec my-container ps aux | grep 1",
+      "difficulty": "medium",
+      "tags": ["dockerfile", "signals", "cmd", "entrypoint"]
+    },
+    {
+      "front": "How do you implement a Docker image tagging strategy for CI/CD?",
+      "back": "Tag images with multiple identifiers: **semantic version** (for release tracking), **git SHA** (for exact reproducibility), and **branch/environment** (for environment routing). Avoid `latest` in production as it is mutable. Use image digests (`@sha256:...`) for guaranteed immutability.",
+      "code_example": "IMAGE=registry.example.com/my-app\nVERSION=$(git describe --tags)\nSHA=$(git rev-parse --short HEAD)\n\ndocker build -t $IMAGE:$VERSION -t $IMAGE:$SHA -t $IMAGE:latest .\ndocker push $IMAGE:$VERSION\ndocker push $IMAGE:$SHA\ndocker push $IMAGE:latest\n\n# Pin by digest in manifests:\n# image: my-app@sha256:abc123...",
+      "difficulty": "medium",
+      "tags": ["tagging", "cicd", "registry"]
+    },
+    {
+      "front": "How do you minimize Docker image size to under 10MB for a Go service?",
+      "back": "Use multi-stage builds: compile a static binary in the Go builder image, then copy to `scratch` (empty image) or `distroless/static`. Ensure `CGO_ENABLED=0` and use `-ldflags='-s -w'` to strip debug symbols. Compress the binary with UPX for further reduction.",
+      "code_example": "FROM golang:1.22 AS builder\nWORKDIR /src\nCOPY go.* ./\nRUN go mod download\nCOPY . .\nRUN CGO_ENABLED=0 GOOS=linux   go build -ldflags=\"-s -w\" -o /app ./cmd/server\n\nFROM scratch\nCOPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/\nCOPY --from=builder /app /app\nENTRYPOINT [\"/app\"]",
+      "difficulty": "hard",
+      "tags": ["optimization", "multi-stage", "go", "scratch"]
+    },
+    {
+      "front": "How do you pass build secrets securely in BuildKit without leaking them into image layers?",
+      "back": "BuildKit's `--mount=type=secret` provides a file-based secret available only during that `RUN` step — it never becomes a layer. Pass the secret file at build time with `--secret`. This prevents credentials from appearing in `docker history`.",
+      "code_example": "# Dockerfile\nRUN --mount=type=secret,id=npmrc,dst=/root/.npmrc     npm install\n\n# Build command:\ndocker build   --secret id=npmrc,src=$HOME/.npmrc   --progress=plain   -t my-app .\n\n# Verify secret is not in layers:\ndocker history my-app",
+      "difficulty": "hard",
+      "tags": ["security", "buildkit", "secrets", "build"]
+    },
+    {
+      "front": "How do you implement container security hardening using seccomp and AppArmor profiles?",
+      "back": "**seccomp** filters block specific Linux syscalls a container can make. Docker's default profile blocks ~44 dangerous syscalls. **AppArmor** defines MAC (mandatory access control) policies for file access, capabilities, and network. Use custom profiles for least-privilege enforcement. Load profiles at container start.",
+      "code_example": "# Custom seccomp profile (deny ptrace):\ndocker run --security-opt seccomp=custom.json nginx\n# AppArmor:\ndocker run --security-opt apparmor=docker-default nginx\n# Generate a profile for your app with bane or aa-genprof:\naa-genprof my-app\n# Verify active profile:\ndocker inspect --format '{{.HostConfig.SecurityOpt}}' my-container",
+      "difficulty": "hard",
+      "tags": ["security", "seccomp", "apparmor", "hardening"]
+    },
+    {
+      "front": "How do you implement efficient Docker layer caching in a CI pipeline with remote cache?",
+      "back": "Use BuildKit's `--cache-from` with a registry-based cache. In CI, pull the cache image before building and push it after a successful build. With `type=registry` inline cache, the cache manifest is stored in the same image. This dramatically reduces CI build times by reusing unchanged layers across pipeline runs.",
+      "code_example": "# Build with remote cache:\ndocker buildx build   --cache-from type=registry,ref=registry.example.com/my-app:cache   --cache-to type=registry,ref=registry.example.com/my-app:cache,mode=max   --push   -t registry.example.com/my-app:latest .",
+      "difficulty": "hard",
+      "tags": ["build-cache", "buildkit", "cicd", "performance"]
+    },
+    {
+      "front": "How do you debug a container with no shell using ephemeral debug containers?",
+      "back": "Kubernetes' `kubectl debug` (or `docker debug` for containers) attaches an ephemeral container that shares the PID/network namespace of the target. This allows using debugging tools without modifying the production image.",
+      "code_example": "# Kubernetes:\nkubectl debug -it my-pod --image=busybox --target=my-container\n# Docker (Docker Desktop / EE):\ndocker debug my-container\n# Manual process namespace sharing:\ndocker run -it --pid=container:my-container   --net=container:my-container   busybox sh",
+      "difficulty": "hard",
+      "tags": ["debugging", "distroless", "operations"]
+    },
+    {
+      "front": "How do you implement layer squashing and when should you use it?",
+      "back": "**Layer squashing** combines all image layers into one, eliminating intermediate data (e.g., files deleted in later layers but still present in earlier ones). Use `docker build --squash` (experimental) or multi-stage builds (preferred). Squashing loses layer-sharing benefits, so it's best for distributing finalized images.",
+      "code_example": "# Multi-stage approach (preferred over --squash):\nFROM ubuntu AS builder\nRUN apt-get update && apt-get install -y curl\nRUN rm -rf /var/lib/apt/lists/*\n# Any deleted files still exist in the builder's layers\n\nFROM ubuntu AS final\nCOPY --from=builder /usr/bin/curl /usr/bin/curl\n# Final stage has only one layer containing exactly curl",
+      "difficulty": "hard",
+      "tags": ["optimization", "layers", "squashing"]
+    },
+    {
+      "front": "How do you implement Docker image signing and verification for supply chain security?",
+      "back": "Use **Docker Content Trust** (DCT) with Notary v1 or **Sigstore/Cosign** (modern standard). Cosign signs images using keyless OIDC signing (CI identity) and stores signatures in the registry. Verify before pulling in production. Integrate with policy engines like OPA/Kyverno.",
+      "code_example": "# Sign with cosign (keyless OIDC):\ncosign sign registry.example.com/my-app:1.0.0\n\n# Verify:\ncosign verify   --certificate-identity-regexp=\".*\"   --certificate-oidc-issuer=https://accounts.google.com   registry.example.com/my-app:1.0.0\n\n# Docker Content Trust (classic):\nexport DOCKER_CONTENT_TRUST=1\ndocker push registry.example.com/my-app:1.0.0",
+      "difficulty": "hard",
+      "tags": ["security", "signing", "supply-chain"]
+    },
+    {
+      "front": "How do you troubleshoot high container memory usage that doesn't show in process memory tools?",
+      "back": "Java and some runtimes don't honor cgroup memory limits by default, causing OOMKills. The JVM's heap is separate from native memory (Metaspace, thread stacks, NIO buffers). Check `docker stats` vs container's cgroup actual usage: `cat /sys/fs/cgroup/memory/memory.usage_in_bytes`. For JVM, add `-XX:MaxRAMPercentage=75 -XX:+UseContainerSupport`.",
+      "code_example": "# Inside container:\ncat /sys/fs/cgroup/memory/memory.usage_in_bytes\ncat /sys/fs/cgroup/memory/memory.stat\n# JVM container-aware flags:\ndocker run -e JAVA_TOOL_OPTIONS=\"-XX:MaxRAMPercentage=75   -XX:+UseContainerSupport -XX:+HeapDumpOnOutOfMemoryError\"   my-java-app",
+      "difficulty": "hard",
+      "tags": ["debugging", "memory", "jvm", "resources"]
+    },
+    {
+      "front": "How does Docker's macvlan network driver work and when would you use it?",
+      "back": "**macvlan** assigns each container a unique MAC address and appears as a physical device on the network. The container gets an IP directly from the external network (no NAT). Use for legacy apps that need to be directly addressable on the LAN, or for network monitoring tools that need raw access. Requires promiscuous mode on the host NIC.",
+      "code_example": "# Create macvlan network:\ndocker network create -d macvlan   --subnet=192.168.1.0/24   --gateway=192.168.1.1   -o parent=eth0   my-macvlan\n\ndocker run --network my-macvlan   --ip=192.168.1.100   nginx",
+      "difficulty": "hard",
+      "tags": ["networking", "macvlan", "advanced"]
+    },
+    {
+      "front": "How do you implement a Docker-based development environment that mirrors production exactly?",
+      "back": "Use the same base image and build target as production. Mount source code as a volume for live reloading. Use Compose profiles to switch dev/prod services. Override CMD for dev tools (nodemon, air, reflex). Pin all base image digests to prevent drift.",
+      "code_example": "# compose.yaml\nservices:\n  app:\n    build:\n      context: .\n      target: development   # multi-stage target\n    volumes:\n      - .:/app\n      - /app/node_modules   # anonymous vol to prevent override\n    command: [\"npm\", \"run\", \"dev\"]\n    environment:\n      - NODE_ENV=development\n  db:\n    image: postgres:16@sha256:<digest>  # digest-pinned",
+      "difficulty": "hard",
+      "tags": ["development", "compose", "best-practices"]
+    },
+    {
+      "front": "How do you diagnose and fix slow Docker builds in a monorepo?",
+      "back": "Root causes: large build context (use `.dockerignore`), inefficient layer ordering (dependencies before source), no BuildKit parallelism, no remote cache. Profile with `--progress=plain`. Use `docker buildx` with `--cache-from/to` and split monorepo services into separate build contexts with `context:` in Compose.",
+      "code_example": "# Measure build context size:\ndu -sh . --exclude=.git\n# Build with timing breakdown:\nDOCKER_BUILDKIT=1 docker build --progress=plain .\n# Per-service build context in compose:\nservices:\n  api:\n    build:\n      context: ./services/api   # Only send api/ as context\n      dockerfile: ../../Dockerfile",
+      "difficulty": "hard",
+      "tags": ["performance", "build", "monorepo", "debugging"]
+    },
+    {
+      "front": "How do you implement blue-green deployments using Docker and a reverse proxy?",
+      "back": "Run two identical stacks (`blue` and `green`) behind a reverse proxy (Traefik, Nginx). Deploy new version to inactive stack, run smoke tests, then switch proxy routing with zero downtime by updating the upstream. Keep old stack running briefly for instant rollback.",
+      "code_example": "# Traefik dynamic config switch:\ndocker service create --name app-green   --label traefik.enable=false   # initially hidden\n  my-app:v2\n\n# After tests pass, switch labels:\ndocker service update   --label-add traefik.enable=true   --label-rm traefik.enable app-green\n\ndocker service update   --label-add traefik.enable=false app-blue",
+      "difficulty": "hard",
+      "tags": ["deployment", "blue-green", "operations"]
+    },
+    {
+      "front": "How does Docker handle PID 1 and why does it matter for signal handling and zombie processes?",
+      "back": "PID 1 receives signals and is responsible for reaping orphan processes (zombies). Most apps are not designed to be PID 1. Use **tini** (lightweight init) or `docker run --init` to handle SIGTERM properly and reap zombies. Without it, `docker stop` may timeout and send SIGKILL, causing unclean shutdowns.",
+      "code_example": "# Option 1: docker run --init\ndocker run --init my-app\n\n# Option 2: use tini in Dockerfile\nFROM alpine\nRUN apk add --no-cache tini\nENTRYPOINT [\"/sbin/tini\", \"--\"]\nCMD [\"node\", \"server.js\"]\n\n# Option 3: dumb-init\nRUN apt-get install -y dumb-init\nENTRYPOINT [\"dumb-init\", \"--\"]",
+      "difficulty": "hard",
+      "tags": ["internals", "signals", "pid"]
+    },
+    {
+      "front": "How do you use Docker's BuildKit SSH forwarding to build images that need private Git repos?",
+      "back": "BuildKit's `--mount=type=ssh` forwards the host SSH agent into the build step without embedding private keys in the image. The SSH key is accessible only during that RUN instruction and leaves no trace in the final image.",
+      "code_example": "# Dockerfile:\nFROM golang:1.22\nRUN --mount=type=ssh go env GONOSUMCHECK=* &&     git config --global url.\"git@github.com:\".insteadOf \"https://github.com/\" &&     go mod download\n\n# Build:\neval $(ssh-agent)\nssh-add ~/.ssh/id_rsa\ndocker buildx build --ssh default=$SSH_AUTH_SOCK -t my-app .",
+      "difficulty": "hard",
+      "tags": ["buildkit", "ssh", "security", "build"]
+    },
+    {
+      "front": "How do you detect and prevent Docker container escape vulnerabilities?",
+      "back": "Container escapes exploit misconfigured privileges or kernel vulnerabilities. Prevention: never run `--privileged`, drop all capabilities (`--cap-drop ALL`), enable seccomp/AppArmor, use rootless Docker, mount sensitive host paths read-only or not at all. Use tools like **Falco** for runtime threat detection and **Trivy** or **Grype** for image scanning.",
+      "code_example": "# Detect dangerous flags in running containers:\ndocker inspect $(docker ps -q)   --format '{{.Name}} Privileged={{.HostConfig.Privileged}}'\n\n# Enforce policy with OPA/Conftest:\nconftest test docker-compose.yaml\n\n# Falco rule example (detects shell in container):\n# - rule: Terminal shell in container\n#   condition: spawned_process and container and shell_procs",
+      "difficulty": "hard",
+      "tags": ["security", "container-escape", "hardening"]
+    },
+    {
+      "front": "How do you implement a reproducible Docker build (same inputs → same output digest)?",
+      "back": "Reproducibility requires: pinning base images by digest, using `--build-arg SOURCE_DATE_EPOCH` to set deterministic timestamps, pinning all package versions, using `--no-cache` in CI. BuildKit supports `SOURCE_DATE_EPOCH` to normalize file timestamps in layers. Test with `docker buildx imagetools inspect` to compare digests.",
+      "code_example": "# Pin base image by digest:\nFROM node:20-alpine@sha256:abc123def456...\n# Set deterministic timestamp:\ndocker buildx build   --build-arg SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)   --no-cache   -t my-app:$(git rev-parse HEAD) .\n# Compare digests:\ndocker inspect --format='{{.Id}}' build1 build2",
+      "difficulty": "hard",
+      "tags": ["reproducibility", "build", "security"]
+    },
+    {
+      "front": "How do you profile and optimize Docker container CPU performance?",
+      "back": "Use `docker stats` for coarse metrics, `perf` or `bpftrace` for deep profiling inside the container. CPU throttling is visible in the cgroup `cpu.stat` (`throttled_time`). This happens when containers exceed their CPU quota. Distinguish between CPU shortage (raise `--cpus`) and application-level bottlenecks (profiling).",
+      "code_example": "# Check CPU throttling:\ndocker exec my-container cat /sys/fs/cgroup/cpu/cpu.stat\n# Throttled time in nanoseconds → should be near 0\n\n# Profile with perf (requires SYS_ADMIN or --privileged):\ndocker run --cap-add SYS_ADMIN my-app\ndocker exec -it my-app perf top\n\n# bpftrace for syscall tracing:\ndocker exec my-app bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'",
+      "difficulty": "hard",
+      "tags": ["performance", "profiling", "cpu", "cgroups"]
+    },
+    {
+      "front": "How do you implement a content-addressable image cache with Dockerfile heredocs for complex build scripts?",
+      "back": "Dockerfile heredocs (BuildKit 1.4+) embed multi-line scripts inline without external files, ensuring the layer hash changes only when the script changes. Combined with careful ARG placement, this maximizes cache efficiency for complex build stages.",
+      "code_example": "# syntax=docker/dockerfile:1.4\nFROM alpine\n\n# Heredoc RUN - clean multi-line script\nRUN <<EOF\nset -e\napk add --no-cache curl git\ncurl -fsSL https://example.com/install.sh | sh\nrm -rf /tmp/*\nEOF\n\n# Heredoc COPY - inline files without external assets\nCOPY <<EOF /etc/myapp/config.yaml\nserver:\n  port: 8080\n  env: production\nEOF",
+      "difficulty": "hard",
+      "tags": ["dockerfile", "heredoc", "buildkit", "advanced"]
+    },
+    {
+      "front": "How do you implement fine-grained network segmentation between Docker Compose services?",
+      "back": "Assign services to multiple networks selectively. A service connected only to `frontend` cannot reach `backend` services. Place shared services (e.g., API) on multiple networks as a DMZ. Use the `internal: true` flag to create a network without external internet access for sensitive tiers.",
+      "code_example": "services:\n  nginx:\n    networks: [frontend]\n  api:\n    networks: [frontend, backend]\n  db:\n    networks: [backend]\n  cache:\n    networks: [backend]\n\nnetworks:\n  frontend:\n  backend:\n    internal: true   # no external internet access",
+      "difficulty": "hard",
+      "tags": ["networking", "compose", "security", "segmentation"]
+    }
+  ],
+  "pulumi_cards": [
+    {
+      "front": "What is a Pulumi project?",
+      "back": "A **Pulumi project** is a directory containing a `Pulumi.yaml` file that defines the project name, runtime (TypeScript, Python, Go, etc.), and description. It is the top-level organizational unit — one project can have multiple stacks.",
+      "code_example": "# Pulumi.yaml\nname: my-infra\nruntime: nodejs\ndescription: Production infrastructure\n# Initialize:\npulumi new typescript",
+      "difficulty": "easy",
+      "tags": ["projects", "fundamentals"]
+    },
+    {
+      "front": "What is a Pulumi stack?",
+      "back": "A **stack** is an isolated deployment target for a project (e.g., `dev`, `staging`, `prod`). Each stack has its own configuration, state, and resource instances. Stacks enable the same code to deploy different environments.",
+      "code_example": "pulumi stack init dev\npulumi stack init prod\npulumi stack ls\npulumi stack select prod",
+      "difficulty": "easy",
+      "tags": ["stacks", "fundamentals"]
+    },
+    {
+      "front": "What is a Pulumi resource?",
+      "back": "A **resource** represents a cloud infrastructure component (e.g., S3 bucket, EC2 instance, Kubernetes Deployment). Resources are declared in code; Pulumi computes a diff against state and calls the provider API to create, update, or delete them.",
+      "code_example": "import * as aws from \"@pulumi/aws\";\n\nconst bucket = new aws.s3.Bucket(\"my-bucket\", {\n  acl: \"private\",\n  tags: { Environment: \"dev\" },\n});",
+      "difficulty": "easy",
+      "tags": ["resources", "fundamentals"]
+    },
+    {
+      "front": "What is the difference between Pulumi Inputs and Outputs?",
+      "back": "**Inputs** are values you pass into a resource (can be plain values or `Output<T>`). **Outputs** are values returned by resources that may not be known until after apply (e.g., an auto-assigned IP). Outputs wrap asynchronous resolution — you cannot use them directly as strings.",
+      "code_example": "const server = new aws.ec2.Instance(\"web\", {\n  ami: \"ami-0c55b159cbfafe1f0\",  // Input<string>\n  instanceType: \"t3.micro\",\n});\n// server.publicIp is Output<string>\nexport const ip = server.publicIp;",
+      "difficulty": "easy",
+      "tags": ["inputs", "outputs", "fundamentals"]
+    },
+    {
+      "front": "What does pulumi up do?",
+      "back": "`pulumi up` previews and deploys infrastructure changes. It computes a diff between the desired state (code) and actual state (state file), shows the plan, and applies it after confirmation. Use `--yes` to skip confirmation.",
+      "code_example": "pulumi up\npulumi up --yes\npulumi up --target urn:pulumi:dev::my-proj::aws:s3/bucket:Bucket::my-bucket",
+      "difficulty": "easy",
+      "tags": ["cli", "fundamentals", "up"]
+    },
+    {
+      "front": "What does pulumi preview do?",
+      "back": "`pulumi preview` computes and displays the planned changes without making any API calls. It shows `+` (create), `~` (update), `-` (delete), and `=` (unchanged) for each resource. Use it in CI to validate changes before applying.",
+      "code_example": "pulumi preview\npulumi preview --diff      # Show property-level diffs\npulumi preview --json      # Machine-readable output for CI",
+      "difficulty": "easy",
+      "tags": ["cli", "preview"]
+    },
+    {
+      "front": "What does pulumi destroy do?",
+      "back": "`pulumi destroy` deletes all resources in the current stack in the reverse dependency order. Resources with `protect: true` are skipped. Use `--target` to delete specific resources. State is updated after deletion.",
+      "code_example": "pulumi destroy\npulumi destroy --yes\npulumi destroy --target urn:pulumi:dev::proj::aws:s3/bucket:Bucket::my-bucket",
+      "difficulty": "easy",
+      "tags": ["cli", "destroy"]
+    },
+    {
+      "front": "What is Pulumi config and how do you use it?",
+      "back": "**Config** stores per-stack key-value settings in `Pulumi.<stack>.yaml`. Use `pulumi config set` to store values and retrieve them in code via `new pulumi.Config()`. Supports secrets (encrypted) via `--secret`.",
+      "code_example": "pulumi config set aws:region us-east-1\npulumi config set dbPassword s3cr3t --secret\n# In code:\nconst config = new pulumi.Config();\nconst region = config.require(\"aws:region\");\nconst dbPass = config.requireSecret(\"dbPassword\");",
+      "difficulty": "easy",
+      "tags": ["config", "stacks"]
+    },
+    {
+      "front": "What is a Pulumi provider?",
+      "back": "A **provider** is a plugin that knows how to manage a specific cloud or service (AWS, Azure, GCP, Kubernetes, etc.). It translates Pulumi resource declarations into API calls. Configure providers with credentials and settings.",
+      "code_example": "const awsProvider = new aws.Provider(\"us-west\", {\n  region: \"us-west-2\",\n});\nconst bucket = new aws.s3.Bucket(\"west-bucket\", {}, {\n  provider: awsProvider,\n});",
+      "difficulty": "easy",
+      "tags": ["providers", "fundamentals"]
+    },
+    {
+      "front": "How do you export stack outputs in Pulumi?",
+      "back": "Use `export const` (TypeScript) or `pulumi.export()` to expose values from a stack. Outputs are displayed after `pulumi up` and can be read with `pulumi stack output`. Stack references use these outputs for inter-stack communication.",
+      "code_example": "export const bucketName = bucket.id;\nexport const vpcId = vpc.id;\n\n// CLI:\npulumi stack output bucketName\npulumi stack output --json",
+      "difficulty": "easy",
+      "tags": ["outputs", "stacks"]
+    },
+    {
+      "front": "What is the purpose of apply() in Pulumi?",
+      "back": "`apply()` transforms an `Output<T>` value when it resolves. It is the primary way to use output values in expressions. The callback receives the resolved value and can return a plain value or another Output.",
+      "code_example": "const url = server.publicIp.apply(ip => `http://${ip}:8080`);\n// Chain multiple outputs with pulumi.all():\nconst connStr = pulumi.all([host, port]).apply(([h, p]) =>\n  `postgres://${h}:${p}/mydb`\n);",
+      "difficulty": "easy",
+      "tags": ["outputs", "apply", "fundamentals"]
+    },
+    {
+      "front": "What is pulumi.all() used for?",
+      "back": "`pulumi.all()` takes an array or object of `Output` values and returns a single `Output` that resolves when all inputs resolve. Use it when you need to combine multiple outputs into one value.",
+      "code_example": "const combined = pulumi.all([bucket.id, queue.arn]).apply(([bucketId, queueArn]) => ({\n  bucketId,\n  queueArn,\n  policy: `Allow access from ${bucketId} to ${queueArn}`,\n}));",
+      "difficulty": "easy",
+      "tags": ["outputs", "all", "fundamentals"]
+    },
+    {
+      "front": "What is pulumi.interpolate and when should you use it?",
+      "back": "`pulumi.interpolate` is a tagged template literal that handles `Output<T>` values in template strings, returning a new `Output<string>`. Use it instead of `.apply()` when constructing strings from outputs — it is more readable.",
+      "code_example": "import * as pulumi from \"@pulumi/pulumi\";\n\nconst url = pulumi.interpolate`https://${lb.dnsName}/api/v1`;\n// Equivalent but more verbose:\nconst url2 = lb.dnsName.apply(dns => `https://${dns}/api/v1`);",
+      "difficulty": "easy",
+      "tags": ["outputs", "interpolate", "strings"]
+    },
+    {
+      "front": "How do you set a resource option in Pulumi?",
+      "back": "**Resource options** are passed as the third argument to a resource constructor. Common options: `dependsOn` (explicit ordering), `parent` (component hierarchy), `protect` (prevent deletion), `ignoreChanges` (drift tolerance).",
+      "code_example": "const bucket = new aws.s3.Bucket(\"secure-bucket\", {}, {\n  protect: true,\n  ignoreChanges: [\"tags\"],\n  dependsOn: [iamRole],\n});",
+      "difficulty": "easy",
+      "tags": ["resource-options", "fundamentals"]
+    },
+    {
+      "front": "What are Pulumi backends and what do they store?",
+      "back": "A **backend** stores the **state file** — a JSON record of all deployed resources, their URNs, and output values. Backends: **Pulumi Cloud** (default, hosted), **S3/GCS/Azure Blob** (self-managed), **local filesystem** (for testing). State must not be lost or corrupted.",
+      "code_example": "# Use S3 backend:\npulumi login s3://my-bucket/pulumi-state\n# Use local backend:\npulumi login --local\n# View current backend:\npulumi whoami -v",
+      "difficulty": "easy",
+      "tags": ["state", "backends", "fundamentals"]
+    },
+    {
+      "front": "What is pulumi refresh?",
+      "back": "`pulumi refresh` reconciles the Pulumi state file with actual cloud resources — useful when resources are modified out-of-band (manual console changes). It updates state without making infrastructure changes.",
+      "code_example": "pulumi refresh\npulumi refresh --yes\n# After refresh, run preview to see drift:\npulumi preview",
+      "difficulty": "easy",
+      "tags": ["cli", "state", "drift"]
+    },
+    {
+      "front": "What is a Pulumi component resource?",
+      "back": "A **ComponentResource** is a logical grouping of related resources that appears as a single unit in the Pulumi graph. It enables creating reusable abstractions (e.g., a `VpcWithSubnets` component) that encapsulate multiple resources.",
+      "code_example": "class AppCluster extends pulumi.ComponentResource {\n  public readonly kubeconfig: pulumi.Output<string>;\n  constructor(name: string, opts?: pulumi.ComponentResourceOptions) {\n    super(\"my:cluster:AppCluster\", name, {}, opts);\n    const cluster = new aws.eks.Cluster(name, {}, { parent: this });\n    this.kubeconfig = cluster.kubeconfig;\n    this.registerOutputs({ kubeconfig: this.kubeconfig });\n  }\n}",
+      "difficulty": "easy",
+      "tags": ["components", "abstraction"]
+    },
+    {
+      "front": "What is the protect resource option in Pulumi?",
+      "back": "Setting `protect: true` on a resource prevents `pulumi destroy` and `pulumi up` from deleting it. To delete a protected resource, first set `protect: false` and run `pulumi up`, then destroy. Use it for stateful or critical resources like production databases.",
+      "code_example": "const db = new aws.rds.Instance(\"prod-db\", {\n  engine: \"postgres\",\n  instanceClass: \"db.t3.medium\",\n  allocatedStorage: 100,\n}, {\n  protect: true,\n});",
+      "difficulty": "easy",
+      "tags": ["resource-options", "protect", "safety"]
+    },
+    {
+      "front": "What is the difference between Pulumi YAML and TypeScript?",
+      "back": "**Pulumi YAML** is declarative, requires no programming knowledge, and is great for simple infrastructure. **TypeScript** (and Python/Go) allows loops, conditionals, functions, and full OOP for complex, dynamic infrastructure. YAML has no native abstraction mechanisms; code-based languages do.",
+      "code_example": "# YAML:\nresources:\n  my-bucket:\n    type: aws:s3:Bucket\n    properties:\n      acl: private\n# TypeScript:\nconst buckets = [\"a\",\"b\",\"c\"].map(name =>\n  new aws.s3.Bucket(name, { acl: \"private\" })\n);",
+      "difficulty": "easy",
+      "tags": ["yaml", "typescript", "languages"]
+    },
+    {
+      "front": "How do you import an existing cloud resource into Pulumi state?",
+      "back": "Use the `import` resource option with the resource's cloud ID. On the first `pulumi up`, Pulumi adopts the existing resource into state instead of creating a new one. After import, remove the `import` option.",
+      "code_example": "const existingBucket = new aws.s3.Bucket(\"imported\", {\n  bucket: \"my-existing-bucket-name\",\n}, {\n  import: \"my-existing-bucket-name\",  // S3 bucket name\n});\n// Also CLI-based:\npulumi import aws:s3/bucket:Bucket my-bucket my-existing-bucket-name",
+      "difficulty": "easy",
+      "tags": ["import", "state", "migration"]
+    },
+    {
+      "front": "How do you use stack references to share outputs between Pulumi stacks?",
+      "back": "A **StackReference** reads outputs from another stack. Use `getOutput()` to get an `Output<any>`. This enables loose coupling between stacks — a network stack exports VPC IDs consumed by app stacks.",
+      "code_example": "const networkStack = new pulumi.StackReference(\n  \"org/network/prod\"\n);\nconst vpcId = networkStack.getOutput(\"vpcId\");\nconst subnetIds = networkStack.getOutput(\"privateSubnetIds\");\n\nconst cluster = new aws.eks.Cluster(\"app-cluster\", {\n  vpcConfig: { vpcId, subnetIds },\n});",
+      "difficulty": "medium",
+      "tags": ["stack", "architecture"]
+    },
+    {
+      "front": "How do you manage secrets securely in Pulumi?",
+      "back": "Mark config values as secrets with `pulumi config set --secret`. In code, use `config.requireSecret()` which returns `Output<string>` — the value is encrypted in state and never printed to logs. Pass secrets using `pulumi.secret()` to mark a plain value as secret.",
+      "code_example": "pulumi config set dbPassword mysecret --secret\n// In code:\nconst config = new pulumi.Config();\nconst dbPass = config.requireSecret(\"dbPassword\");\n\n// Mark a computed value as secret:\nconst connStr = pulumi.secret(\n  pulumi.interpolate`postgres://user:${dbPass}@${dbHost}/db`\n);",
+      "difficulty": "medium",
+      "tags": ["secrets", "config", "security"]
+    },
+    {
+      "front": "How do you use the dependsOn resource option and when is it necessary?",
+      "back": "`dependsOn` adds an explicit ordering dependency when the implicit resource graph doesn't capture the real dependency. For example, an IAM policy must exist before a resource that uses it, even if their constructors don't reference each other directly.",
+      "code_example": "const policy = new aws.iam.RolePolicy(\"policy\", {\n  role: role.id,\n  policy: JSON.stringify({ /* ... */ }),\n});\n\nconst instance = new aws.ec2.Instance(\"app\", {\n  ami: \"ami-...\",\n  instanceType: \"t3.micro\",\n  iamInstanceProfile: profile.id,\n}, {\n  dependsOn: [policy],  // Ensure policy exists before instance\n});",
+      "difficulty": "medium",
+      "tags": ["resource-options", "dependencies", "ordering"]
+    },
+    {
+      "front": "How do you use deleteBeforeReplace and when is it required?",
+      "back": "`deleteBeforeReplace: true` deletes the old resource before creating the replacement. Required when the new resource would conflict with the existing one — e.g., a resource with a unique name that can't exist twice simultaneously.",
+      "code_example": "const cert = new aws.acm.Certificate(\"my-cert\", {\n  domainName: \"example.com\",\n  validationMethod: \"DNS\",\n}, {\n  deleteBeforeReplace: true,  // ACM certs with same domain conflict\n});",
+      "difficulty": "medium",
+      "tags": ["resource-options", "replace", "updates"]
+    },
+    {
+      "front": "How do you use ignoreChanges and replaceOnChanges resource options?",
+      "back": "`ignoreChanges` tells Pulumi to ignore drifts or changes on specific properties (useful for externally managed fields like `tags`). `replaceOnChanges` forces a resource replacement when specific properties change, even if the provider would normally do an in-place update.",
+      "code_example": "const instance = new aws.ec2.Instance(\"web\", {\n  ami: amiId,\n  instanceType: \"t3.micro\",\n  userData: userDataScript,\n}, {\n  ignoreChanges: [\"userData\", \"tags\"],  // Don't drift on these\n  replaceOnChanges: [\"ami\"],            // New AMI = new instance\n});",
+      "difficulty": "medium",
+      "tags": ["resource-options", "drift", "updates"]
+    },
+    {
+      "front": "How does Pulumi handle infrastructure drift and how do you remediate it?",
+      "back": "**Drift** occurs when real cloud state diverges from Pulumi state (manual changes). Run `pulumi refresh` to sync state with reality. Then `pulumi preview` shows the diff. Either re-apply to revert the drift, or update code to match the new desired state.",
+      "code_example": "# Detect drift:\npulumi refresh --yes\npulumi preview\n\n# Option A: Revert manual changes (reapply code):\npulumi up\n\n# Option B: Accept drift by updating code then:\npulumi up\n\n# Option C: Import changed resources with new values:\npulumi import aws:ec2/instance:Instance web i-1234567890",
+      "difficulty": "medium",
+      "tags": ["drift", "state", "operations"]
+    },
+    {
+      "front": "How do you write a Pulumi unit test in TypeScript?",
+      "back": "Use `pulumi.runtime.setMocks()` to mock resource creation without calling real cloud APIs. Set `pulumi.runtime.setAllConfig()` for config values. Test resource properties via output callbacks. The `@pulumi/pulumi/testing` package facilitates this.",
+      "code_example": "import * as pulumi from \"@pulumi/pulumi\";\npulumi.runtime.setMocks({\n  newResource(args) {\n    return { id: args.name + \"_id\", state: args.inputs };\n  },\n  call(args) { return args.inputs; },\n});\n// Import your infra code after setting mocks\nconst infra = require(\"../index\");\nit(\"bucket should be private\", async () => {\n  const acl = await infra.bucket.acl.promise();\n  expect(acl).toBe(\"private\");\n});",
+      "difficulty": "medium",
+      "tags": ["testing", "unit-tests", "typescript"]
+    },
+    {
+      "front": "How do you use Pulumi transformations to apply tags to all resources in a stack?",
+      "back": "**Transformations** are functions applied to every resource in a stack (or subtree) at registration time. Use `pulumi.runtime.registerStackTransformation()` to inject tags, regions, or other properties without modifying each resource.",
+      "code_example": "pulumi.runtime.registerStackTransformation((args) => {\n  if (args.type.startsWith(\"aws:\")) {\n    return {\n      props: {\n        ...args.props,\n        tags: {\n          ...args.props.tags,\n          ManagedBy: \"Pulumi\",\n          Stack: pulumi.getStack(),\n        },\n      },\n      opts: args.opts,\n    };\n  }\n  return undefined;\n});",
+      "difficulty": "medium",
+      "tags": ["best-practices"]
+    },
+    {
+      "front": "How do you use the Pulumi Automation API?",
+      "back": "The **Automation API** embeds Pulumi as a library within application code, enabling programmatic stack management without the CLI. Use it for CI/CD pipelines, self-service infrastructure portals, or dynamic environment provisioning.",
+      "code_example": "import { LocalWorkspace } from \"@pulumi/pulumi/automation\";\n\nconst stack = await LocalWorkspace.createOrSelectStack({\n  stackName: \"dev\",\n  workDir: \"./infra\",\n});\nawait stack.setConfig(\"aws:region\", { value: \"us-east-1\" });\nconst upResult = await stack.up({ onOutput: console.log });\nconsole.log(upResult.outputs.bucketName.value);",
+      "difficulty": "medium",
+      "tags": ["automation-api", "cicd"]
+    },
+    {
+      "front": "What are Pulumi aliases and why do you use them?",
+      "back": "**Aliases** allow renaming or reparenting resources without causing a delete+create replacement. When you rename a resource or move it into a component, add an alias with the old URN/name so Pulumi recognizes it as the same resource.",
+      "code_example": "const bucket = new aws.s3.Bucket(\"new-name\", {}, {\n  aliases: [\n    { name: \"old-name\" },  // Previous resource name\n    { name: \"old-name\", parent: pulumi.rootStackResource },\n  ],\n});",
+      "difficulty": "medium",
+      "tags": ["aliases", "refactoring", "resource-options"]
+    },
+    {
+      "front": "How do you use Pulumi ESC (Environments, Secrets, and Config)?",
+      "back": "**Pulumi ESC** centralizes environment configuration and secrets across all stacks and tools. Define environments in the Pulumi Cloud console, then compose them into stacks or use them with `esc run` to inject secrets into any CLI command.",
+      "code_example": "# Pulumi.dev.yaml\nenvironment:\n  - aws-dev-secrets     # ESC environment reference\n  - app-config-dev\n\n# CLI: inject secrets into any command\nesc run my-org/aws-dev-secrets -- aws s3 ls\n\n# Or access in code:\nconst dbUrl = config.requireSecret(\"DATABASE_URL\");\n# Automatically sourced from ESC environment",
+      "difficulty": "medium",
+      "tags": ["esc", "secrets", "configuration"]
+    },
+    {
+      "front": "How do you use Pulumi CrossGuard (Policy as Code) to enforce compliance?",
+      "back": "**CrossGuard** uses policy packs (TypeScript/Python) that run during `pulumi preview` and `pulumi up`. Policies can `warn`, `remediate`, or `mandatory` (block) violations. Org-wide policies are enforced via Pulumi Cloud.",
+      "code_example": "import { PolicyPack, validateResourceOfType } from \"@pulumi/policy\";\nimport * as aws from \"@pulumi/aws\";\n\nnew PolicyPack(\"aws-security\", {\n  policies: [{\n    name: \"s3-no-public-acl\",\n    description: \"S3 buckets must not be public\",\n    enforcementLevel: \"mandatory\",\n    validateResource: validateResourceOfType(aws.s3.Bucket, (bucket, args, reportViolation) => {\n      if (bucket.acl === \"public-read\") {\n        reportViolation(\"Bucket must not have public-read ACL\");\n      }\n    }),\n  }],\n});",
+      "difficulty": "medium",
+      "tags": ["policy", "crossguard", "compliance"]
+    },
+    {
+      "front": "How do you manage multiple cloud accounts/regions with Pulumi providers?",
+      "back": "Instantiate multiple provider objects with different credentials or regions. Pass the provider explicitly via the `provider` resource option. For AWS, each provider can target a different account via assume-role ARNs.",
+      "code_example": "const usEast = new aws.Provider(\"us-east\", {\n  region: \"us-east-1\",\n  assumeRole: { roleArn: \"arn:aws:iam::111111:role/deploy\" },\n});\nconst euWest = new aws.Provider(\"eu-west\", {\n  region: \"eu-west-1\",\n  assumeRole: { roleArn: \"arn:aws:iam::222222:role/deploy\" },\n});\nconst bucketUS = new aws.s3.Bucket(\"us-data\", {}, { provider: usEast });\nconst bucketEU = new aws.s3.Bucket(\"eu-data\", {}, { provider: euWest });",
+      "difficulty": "medium",
+      "tags": ["providers", "multi-account", "multi-region"]
+    },
+    {
+      "front": "How do you use dynamic providers in Pulumi?",
+      "back": "**Dynamic providers** let you define custom resource CRUD operations in the same language as your infrastructure code — no plugin binary needed. Implement `ResourceProvider` with `create`, `read`, `update`, `delete`, and optionally `diff` methods.",
+      "code_example": "import * as pulumi from \"@pulumi/pulumi\";\n\nconst myProvider: pulumi.dynamic.ResourceProvider = {\n  async create(inputs) {\n    // Call a custom API, store result\n    const result = await myApi.create(inputs.name);\n    return { id: result.id, outs: { url: result.url } };\n  },\n  async delete(id, props) {\n    await myApi.delete(id);\n  },\n};\n\nclass MyCustomResource extends pulumi.dynamic.Resource {\n  public readonly url!: pulumi.Output<string>;\n  constructor(name: string, args: { name: pulumi.Input<string> }) {\n    super(myProvider, name, { url: undefined, ...args });\n  }\n}",
+      "difficulty": "medium",
+      "tags": ["dynamic-providers"]
+    },
+    {
+      "front": "How do you use Pulumi config for hierarchical configuration across environments?",
+      "back": "Pulumi has no built-in config inheritance, but you can implement it by reading a base config namespace alongside env-specific values. Use `config.get()` (returns undefined if missing) and fall back to defaults. Alternatively, use ESC environment composition for true hierarchy.",
+      "code_example": "const config = new pulumi.Config();\n// Stack-specific config: Pulumi.prod.yaml\n// base defaults in code:\nconst maxSize   = config.getNumber(\"maxSize\")   ?? 10;\nconst minSize   = config.getNumber(\"minSize\")   ?? 2;\nconst logLevel  = config.get(\"logLevel\")        ?? \"warn\";\nconst dbSize    = config.get(\"dbInstanceClass\") ?? \"db.t3.small\";",
+      "difficulty": "medium",
+      "tags": ["config", "environments", "best-practices"]
+    },
+    {
+      "front": "How do you run Pulumi integration tests?",
+      "back": "Pulumi integration tests deploy real resources, verify them, and tear them down. Use the `@pulumi/pulumi/testing/integration` package or the Automation API to run a full `up`/test/`destroy` cycle. Run integration tests in an isolated stack (e.g., `test-<random>`).",
+      "code_example": "import { LocalWorkspace } from \"@pulumi/pulumi/automation\";\n\nit(\"bucket is accessible\", async () => {\n  const stack = await LocalWorkspace.createStack({\n    stackName: `test-${Date.now()}`,\n    workDir: \"./infra\",\n  });\n  await stack.up();\n  const outputs = await stack.outputs();\n  const url = outputs.bucketUrl.value;\n  const res = await fetch(url);\n  expect(res.status).toBe(200);\n  await stack.destroy();\n  await stack.workspace.removeStack(stack.name);\n});",
+      "difficulty": "medium",
+      "tags": ["testing", "integration-tests", "automation-api"]
+    },
+    {
+      "front": "How do you use Pulumi to deploy Kubernetes resources?",
+      "back": "Use the `@pulumi/kubernetes` provider to deploy any Kubernetes resource. Pulumi automatically uses your kubeconfig. You can define raw YAML manifests, use typed resources, or deploy Helm charts — all in the same program alongside cloud infrastructure.",
+      "code_example": "import * as k8s from \"@pulumi/kubernetes\";\n\nconst deployment = new k8s.apps.v1.Deployment(\"app\", {\n  spec: {\n    replicas: 3,\n    selector: { matchLabels: { app: \"my-app\" } },\n    template: {\n      metadata: { labels: { app: \"my-app\" } },\n      spec: { containers: [{ name: \"app\", image: \"nginx:1.25\" }] },\n    },\n  },\n});",
+      "difficulty": "medium",
+      "tags": ["kubernetes", "providers", "deployment"]
+    },
+    {
+      "front": "What is the Pulumi resource model and how does URN identification work?",
+      "back": "Every resource has a **URN** (Uniform Resource Name): `urn:pulumi:<stack>::<project>::<type>::<name>`. The URN is the stable identifier used in state. Renaming a resource changes its URN and causes a replacement unless you add an alias. Types follow the pattern `<pkg>:<module>:<Type>`.",
+      "code_example": "# URN example:\n# urn:pulumi:prod::my-infra::aws:s3/bucket:Bucket::data-bucket\n# └─ stack ─┘ └─ project ─┘ └── resource type ──┘ └─ name ─┘\n\n# Get URN of a resource:\npulumi stack export | jq '.deployment.resources[].urn'\n\n# Target by URN:\npulumi up --target 'urn:pulumi:prod::my-infra::aws:s3/bucket:Bucket::data-bucket'",
+      "difficulty": "medium",
+      "tags": ["urns", "state", "internals"]
+    },
+    {
+      "front": "How do you handle Pulumi provider version pinning and upgrades?",
+      "back": "Pin provider versions in `package.json` (Node) or `requirements.txt` (Python). Upgrade with `pulumi plugin upgrade` or `npm update`. Always run `pulumi preview` after an upgrade to check for breaking changes. Provider MINOR versions may introduce new required properties.",
+      "code_example": "# package.json - pin provider:\n{\n  \"dependencies\": {\n    \"@pulumi/aws\": \"6.32.0\",\n    \"@pulumi/pulumi\": \"3.114.0\"\n  }\n}\n# Upgrade:\nnpm update @pulumi/aws\npulumi preview  # Check for breaking changes\n# Install specific plugin:\npulumi plugin install resource aws 6.32.0",
+      "difficulty": "medium",
+      "tags": ["providers", "versioning", "upgrades"]
+    },
+    {
+      "front": "How do you use Pulumi to manage Helm chart deployments on Kubernetes?",
+      "back": "Use the `@pulumi/kubernetes` provider's `helm.v3.Release` resource to deploy Helm charts. Supply values as a TypeScript object (no YAML file needed). Outputs expose rendered manifest details. Combine with stack references to pass cluster credentials from a platform stack.",
+      "code_example": "import * as k8s from \"@pulumi/kubernetes\";\n\nconst nginxIngress = new k8s.helm.v3.Release(\"nginx-ingress\", {\n  chart: \"ingress-nginx\",\n  repositoryOpts: { repo: \"https://kubernetes.github.io/ingress-nginx\" },\n  version: \"4.10.0\",\n  namespace: \"ingress-nginx\",\n  createNamespace: true,\n  values: {\n    controller: {\n      replicaCount: 2,\n      service: { type: \"LoadBalancer\" },\n    },\n  },\n});\nexport const ingressClass = nginxIngress.status.apply(s => s.name);",
+      "difficulty": "medium",
+      "tags": ["kubernetes", "helm", "providers"]
+    },
+    {
+      "front": "How do you implement a multi-stack Pulumi architecture for a large platform team?",
+      "back": "Split infrastructure into layers: **foundation** (VPC, DNS), **data** (RDS, S3), **platform** (EKS, IAM), **app** (workloads). Each layer is a separate Pulumi project/stack. Use stack references for dependencies. Apply different access controls and change rates. Use a GitOps model where each layer has its own CI pipeline with approval gates.",
+      "code_example": "// In the app stack, reference platform outputs:\nconst platform = new pulumi.StackReference(`${org}/platform/${env}`);\nconst clusterEndpoint = platform.getOutput(\"clusterEndpoint\");\nconst clusterCA = platform.getOutput(\"clusterCA\");\n\nconst k8sProvider = new k8s.Provider(\"k8s\", {\n  host: clusterEndpoint,\n  clusterCaCertificate: clusterCA,\n});",
+      "difficulty": "hard",
+      "tags": ["architecture", "stacks"]
+    },
+    {
+      "front": "How do you implement safe resource replacement strategies in Pulumi for zero-downtime changes?",
+      "back": "Use `createBeforeReplace: true` (default for some providers) to ensure the new resource exists before the old one is deleted. For stateful resources, combine with `deleteBeforeReplace` when uniqueness constraints prevent coexistence. Use `protect` + manual import workflows for critical paths. Test replacement chains in staging with `pulumi preview --diff`.",
+      "code_example": "// Ensure new load balancer exists before removing old one:\nconst lb = new aws.lb.LoadBalancer(\"app-lb\", {\n  name: `app-lb-${environment}`,\n}, {\n  deleteBeforeReplace: false,  // Default: create first\n  replaceOnChanges: [\"subnets\"],\n});\n\n// For DB: must delete first (name conflict):\nconst db = new aws.rds.Instance(\"main-db\", {}, {\n  deleteBeforeReplace: true,\n  protect: true,\n});",
+      "difficulty": "hard",
+      "tags": ["replacements", "zero-downtime", "resource-options"]
+    },
+    {
+      "front": "How do you implement custom ComponentResources with proper Output propagation?",
+      "back": "Extend `pulumi.ComponentResource`. Pass `{ parent: this }` to child resources. Declare output properties as class fields with `!` (definite assignment). Call `this.registerOutputs()` at the end of the constructor to finalize output values and ensure proper lifecycle management.",
+      "code_example": "export class AppService extends pulumi.ComponentResource {\n  public readonly url: pulumi.Output<string>;\n  public readonly serviceArn: pulumi.Output<string>;\n\n  constructor(name: string, args: AppServiceArgs, opts?: pulumi.ComponentResourceOptions) {\n    super(\"myplatform:index:AppService\", name, {}, opts);\n    const childOpts = { parent: this };\n\n    const taskDef = new aws.ecs.TaskDefinition(`${name}-task`, { ... }, childOpts);\n    const service  = new aws.ecs.Service(`${name}-svc`, {\n      taskDefinition: taskDef.arn,\n      ...\n    }, childOpts);\n\n    this.serviceArn = service.id;\n    this.url = pulumi.interpolate`https://${lb.dnsName}`;\n    this.registerOutputs({ url: this.url, serviceArn: this.serviceArn });\n  }\n}",
+      "difficulty": "hard",
+      "tags": ["components", "outputs", "patterns"]
+    },
+    {
+      "front": "How do you handle Pulumi state corruption or lost state files?",
+      "back": "If state is corrupted, use `pulumi stack export` to get the JSON and manually edit it, then `pulumi stack import`. For lost state, import all existing resources by hand using `pulumi import`. Use `--repair` flag with `pulumi refresh`. Always back up state to a remote backend with versioning. Pulumi Cloud keeps full history.",
+      "code_example": "# Export and edit state:\npulumi stack export > state.json\n# Edit state.json to fix corruption\npulumi stack import < state.json\n\n# Remove a stuck resource from state:\npulumi state delete urn:pulumi:dev::proj::aws:s3/bucket:Bucket::my-bucket\n\n# Unprotect a resource stuck with protect=true:\npulumi state unprotect urn:pulumi:dev::proj::aws:s3/bucket:Bucket::my-bucket",
+      "difficulty": "hard",
+      "tags": ["state", "recovery", "operations"]
+    },
+    {
+      "front": "How do you implement Pulumi with GitOps and automated drift detection?",
+      "back": "Run `pulumi preview --json` in CI on a schedule. Parse output for non-empty diff. Alert or auto-remediate via `pulumi up --yes` in a controlled pipeline. Use `pulumi refresh` before preview to detect cloud drift. Gate pull requests with `pulumi preview` comments using Pulumi's GitHub App or custom CI scripts.",
+      "code_example": "# GitHub Actions - drift detection:\n- name: Detect drift\n  run: |\n    pulumi refresh --yes --non-interactive\n    RESULT=$(pulumi preview --json 2>&1)\n    CHANGES=$(echo \"$RESULT\" | jq '.changeSummary | .create + .update + .delete')\n    if [ \"$CHANGES\" -gt \"0\" ]; then\n      echo \"::warning::Infrastructure drift detected: $CHANGES changes\"\n      echo \"$RESULT\" | jq '.steps[] | select(.op != \"same\")'\n      exit 1\n    fi",
+      "difficulty": "hard",
+      "tags": ["gitops", "cicd", "drift", "automation"]
+    },
+    {
+      "front": "How do you implement Pulumi CrossGuard policies that auto-remediate non-compliant resources?",
+      "back": "Use `enforcementLevel: \"remediate\"` and return a modified `args.props` from the policy function. Remediation runs during `pulumi up` — the resource props are rewritten before provisioning. Be cautious: remediations can override intentional configurations.",
+      "code_example": "new PolicyPack(\"aws-tagging\", {\n  policies: [{\n    name: \"require-cost-center-tag\",\n    description: \"All resources must have CostCenter tag\",\n    enforcementLevel: \"remediate\",\n    remediateResource: remediateResourceOfType(aws.ec2.Instance,\n      (args) => {\n        args.props[\"tags\"] = {\n          ...args.props[\"tags\"],\n          CostCenter: args.props[\"tags\"]?.CostCenter ?? \"unassigned\",\n          ManagedBy: \"Pulumi\",\n        };\n      }\n    ),\n  }],\n});",
+      "difficulty": "hard",
+      "tags": ["crossguard", "policy", "remediation"]
+    },
+    {
+      "front": "How do you implement a Pulumi dynamic provider for a third-party API with proper idempotency?",
+      "back": "Implement all five CRUD methods. In `create`, return a stable `id`. In `diff`, compare inputs with state to determine if an update is needed — return `replaces: [\"field\"]` if the resource must be replaced. In `update`, use idempotent API patterns (PUT not POST). Handle partial failures by checking if the resource exists in `create`.",
+      "code_example": "const dnsProvider: pulumi.dynamic.ResourceProvider = {\n  async create(inputs) {\n    const existing = await dnsApi.get(inputs.name).catch(() => null);\n    if (existing) return { id: existing.id, outs: { ...existing } };\n    const record = await dnsApi.create(inputs);\n    return { id: record.id, outs: { ttl: record.ttl, value: record.value } };\n  },\n  async diff(id, olds, news) {\n    if (olds.value !== news.value) return { replaces: [\"value\"] };\n    if (olds.ttl !== news.ttl) return { changes: true };\n    return { changes: false };\n  },\n  async update(id, olds, news) {\n    const record = await dnsApi.update(id, news);\n    return { outs: { ttl: record.ttl } };\n  },\n  async delete(id) { await dnsApi.delete(id); },\n  async read(id, props) {\n    const record = await dnsApi.get(props.name);\n    return { id, props: record };\n  },\n};",
+      "difficulty": "hard",
+      "tags": ["dynamic-providers", "idempotency", "extensibility"]
+    },
+    {
+      "front": "How do you use Pulumi's Automation API to build a self-service infrastructure portal?",
+      "back": "Embed Pulumi as a library in a web backend. Each request creates or selects a stack, sets config, and calls `stack.up()`. Stream output via `onOutput` callback. Track stack status in a database. Implement rollback via `stack.destroy()` or `stack.rollback()`. Use workspace-level locking to prevent concurrent deployments.",
+      "code_example": "app.post(\"/provision\", async (req, res) => {\n  const { tenantId, region, size } = req.body;\n  const stack = await LocalWorkspace.createOrSelectStack({\n    stackName: `tenant-${tenantId}`,\n    workDir: \"./infra\",\n  });\n  await stack.setConfig(\"region\", { value: region });\n  await stack.setConfig(\"size\", { value: size });\n\n  const result = await stack.up({\n    onOutput: (msg) => ws.send(JSON.stringify({ log: msg })),\n  });\n  res.json({ outputs: result.outputs });\n});",
+      "difficulty": "hard",
+      "tags": ["automation-api", "self-service", "portal"]
+    },
+    {
+      "front": "How do you handle Pulumi provider resource schema changes that cause unexpected replacements?",
+      "back": "Provider upgrades can change property defaults or rename fields, triggering unexpected replacements. Steps: 1) Read provider CHANGELOG before upgrading. 2) Run `pulumi preview` and inspect each replacement reason. 3) Use `ignoreChanges` to suppress noise from renamed/defaulted fields. 4) For critical resources, use `protect: true` and `pulumi state unprotect` only after review.",
+      "code_example": "# Diagnose replacement reason:\npulumi preview --diff 2>&1 | grep -A5 \"will be replaced\"\n\n# Suppress a new default field that triggers replacement:\nconst rds = new aws.rds.Instance(\"db\", {\n  engine: \"postgres\",\n  engineVersion: \"15.4\",\n}, {\n  ignoreChanges: [\n    \"performanceInsightsEnabled\",  // New default in v6.x\n    \"backupRetentionPeriod\",\n  ],\n});",
+      "difficulty": "hard",
+      "tags": ["providers", "upgrades", "replacements", "operations"]
+    },
+    {
+      "front": "How do you implement secret rotation in Pulumi ESC with automated re-deployment?",
+      "back": "Define secrets in ESC with short TTLs and OIDC-based dynamic credentials. Use the `esc run` command or Pulumi Cloud webhooks to trigger re-deployment when secrets rotate. Combine with `replaceOnChanges` on resources that embed secrets (e.g., ECS task definitions) to ensure they pick up new values.",
+      "code_example": "# ESC environment with dynamic AWS credentials:\n# pulumi-esc-env.yaml\nvalues:\n  aws:\n    login:\n      fn::open::aws-login:\n        oidc:\n          duration: 1h\n          roleArn: arn:aws:iam::123456:role/pulumi-deploy\n          sessionName: pulumi-esc\n\n# Webhook trigger on secret rotation:\n# POST https://api.pulumi.com/api/stacks/{org}/{proj}/{stack}/deployments\n# Payload: { \"inheritSettings\": true }",
+      "difficulty": "hard",
+      "tags": ["esc", "secrets", "rotation", "automation"]
+    },
+    {
+      "front": "How do you implement Pulumi with a monorepo and shared component libraries?",
+      "back": "Create a `packages/components` workspace package with shared `ComponentResource` classes. Publish to a private npm registry or use `npm link`/workspace symlinks. Version the package separately from stacks. Each stack imports the shared library — this enforces standards across teams while allowing local overrides via resource options.",
+      "code_example": "# packages/components/package.json\n{ \"name\": \"@myorg/infra-components\", \"main\": \"dist/index.js\" }\n\n# stacks/prod/index.ts\nimport { AppService } from \"@myorg/infra-components\";\n\nconst api = new AppService(\"api\", {\n  image: \"my-api:1.2.3\",\n  cpu: 512,\n  memory: 1024,\n  replicas: 3,\n});\nexport const apiUrl = api.url;",
+      "difficulty": "hard",
+      "tags": ["monorepo", "components", "architecture", "sharing"]
+    },
+    {
+      "front": "How do you debug Pulumi resource registration failures during pulumi up?",
+      "back": "Enable verbose logging with `--logtostderr --verbose=9`. Check provider logs in `~/.pulumi/logs/`. For gRPC-level debugging, set `PULUMI_DEBUG_GRPC` env var to capture all provider calls. For individual resource failures, use `--target` to isolate. State can be partially applied — use `pulumi refresh` to reconcile.",
+      "code_example": "# Verbose logging:\npulumi up --logtostderr --verbose=9 2>&1 | tee pulumi-debug.log\n\n# gRPC call tracing:\nPULUMI_DEBUG_GRPC=grpc.json pulumi up\ncat grpc.json | jq '.method' | sort | uniq -c\n\n# Target only the failing resource:\npulumi up --target 'urn:pulumi:dev::proj::aws:rds/instance:Instance::db'\n\n# Show pending operations after failed up:\npulumi stack export | jq '.deployment.pending_operations'",
+      "difficulty": "hard",
+      "tags": ["debugging", "operations", "troubleshooting"]
+    },
+    {
+      "front": "How do you implement fine-grained RBAC for a Pulumi Cloud organization?",
+      "back": "Pulumi Cloud supports **Teams** with stack permissions (read, write, admin). Use **OIDC** for CI/CD — machines get short-lived tokens instead of service account keys. Define **access tokens** per service with minimal scope. Apply stack tags and use policy packs to enforce which environments require human approval (`--require-approval` in deployment settings).",
+      "code_example": "# Create team with stack-level permissions via Pulumi Cloud API:\ncurl -X POST https://api.pulumi.com/api/orgs/{org}/teams   -H \"Authorization: token $PULUMI_ACCESS_TOKEN\"   -d '{ \"name\": \"platform-team\", \"description\": \"Platform engineers\" }'\n\n# OIDC for GitHub Actions (no long-lived tokens):\n- uses: pulumi/auth-actions@v1\n  with:\n    organization: my-org\n    requested-token-type: urn:pulumi:token-type:access_token:team\n    scope: team:platform-team",
+      "difficulty": "hard",
+      "tags": ["security", "rbac", "pulumi-cloud", "oidc"]
+    },
+    {
+      "front": "How do you implement Pulumi resource transforms for multi-cloud abstractions?",
+      "back": "Write **transforms** that intercept resource registration and rewrite or redirect resources. Use `pulumi.runtime.registerResourceTransform()` for a single resource type, or stack transforms for all resources. This enables cloud-agnostic platform APIs where the underlying provider is injected via transform.",
+      "code_example": "// Force all S3 buckets to use the compliance account's provider:\npulumi.runtime.registerResourceTransform((args) => {\n  if (args.type === \"aws:s3/bucket:Bucket\") {\n    return {\n      props: { ...args.props, serverSideEncryptionConfiguration: sseConfig },\n      opts: {\n        ...args.opts,\n        provider: complianceAccountProvider,  // Redirect to compliance account\n      },\n    };\n  }\n});",
+      "difficulty": "hard",
+      "tags": ["transforms", "multi-cloud", "platform"]
+    },
+    {
+      "front": "How do you manage Pulumi state for ephemeral preview environments in CI?",
+      "back": "Use a dedicated stack per PR with a unique name (e.g., `pr-<number>`). Store state in S3 with a path prefix per PR. Use the Automation API in CI to create the stack, deploy, run tests, and destroy. Add a cleanup job triggered on PR close. Lock the state with S3 bucket versioning to prevent concurrent runs.",
+      "code_example": "const prNumber = process.env.PR_NUMBER;\nconst stack = await LocalWorkspace.createOrSelectStack({\n  stackName: `pr-${prNumber}`,\n  workDir: \"./infra\",\n  envVars: {\n    PULUMI_BACKEND_URL: `s3://my-state-bucket/pr-envs/pr-${prNumber}`,\n  },\n});\nawait stack.up({ onOutput: console.log });\n// On PR close:\nawait stack.destroy({ onOutput: console.log });\nawait stack.workspace.removeStack(`pr-${prNumber}`);",
+      "difficulty": "hard",
+      "tags": ["state", "cicd", "ephemeral", "automation-api"]
+    },
+    {
+      "front": "How do you implement Pulumi with event-driven infrastructure updates using webhooks?",
+      "back": "Pulumi Cloud exposes a **Deployments REST API** that triggers stack updates programmatically. Set up webhooks from your application or cloud events (SNS, EventBridge) to call the deployments API. Use `inheritSettings: true` to reuse existing stack config, or pass overrides. Implement idempotency by checking deployment status before triggering.",
+      "code_example": "// Lambda handler triggered by S3 event:\nexport const handler = async (event: S3Event) => {\n  const imageTag = event.Records[0].s3.object.key.split(\"/\")[1];\n\n  await fetch(`https://api.pulumi.com/api/stacks/${org}/${proj}/prod/deployments`, {\n    method: \"POST\",\n    headers: {\n      \"Authorization\": `token ${process.env.PULUMI_TOKEN}`,\n      \"Content-Type\": \"application/json\",\n    },\n    body: JSON.stringify({\n      inheritSettings: true,\n      operationContext: {\n        operation: \"update\",\n        preRunCommands: [`pulumi config set imageTag ${imageTag}`],\n      },\n    }),\n  });\n};",
+      "difficulty": "hard",
+      "tags": ["automation", "webhooks", "event-driven", "deployments-api"]
+    },
+    {
+      "front": "How do you implement blue-green infrastructure deployments using Pulumi aliases and output routing?",
+      "back": "Maintain two parallel resource sets (`blue` and `green`). Use a config value to designate the active slot. Route traffic by updating the DNS/LB target via `pulumi.all()` + conditional logic. On cutover, update config and `pulumi up` — only the routing resource changes. Destroy the old slot after validation. Use aliases to avoid unnecessary replacements during slot renaming.",
+      "code_example": "const config = new pulumi.Config();\nconst activeSlot = config.require(\"activeSlot\"); // \"blue\" | \"green\"\n\nconst blueTarget = blue.albArn;\nconst greenTarget = green.albArn;\n\nconst activeArn = activeSlot === \"blue\" ? blueTarget : greenTarget;\n\nconst listener = new aws.lb.ListenerRule(\"active-rule\", {\n  listenerArn: frontendListener.arn,\n  actions: [{ type: \"forward\", targetGroupArn: activeArn }],\n  conditions: [{ pathPattern: { values: [\"/*\"] } }],\n}, {\n  // Alias prevents replacement when switching slots:\n  aliases: [{ name: `active-rule-${activeSlot === \"blue\" ? \"green\" : \"blue\"}` }],\n});",
+      "difficulty": "hard",
+      "tags": ["blue-green", "deployment", "aliases", "patterns"]
+    },
+    {
+      "front": "How do you implement Pulumi integration with AWS CodePipeline or GitHub Actions for multi-environment promotion?",
+      "back": "Create a pipeline with stages: test → deploy-dev → approval → deploy-staging → approval → deploy-prod. Each stage invokes `pulumi up` targeting the appropriate stack. Use OIDC tokens for keyless auth. Gate promotions with `pulumi preview --json` diff assertions and external test suites. Pass artifact versions as config overrides per stage.",
+      "code_example": "# GitHub Actions multi-env workflow:\njobs:\n  deploy-dev:\n    steps:\n      - uses: pulumi/auth-actions@v1\n        with: { organization: my-org }\n      - run: pulumi up --yes --stack dev\n        env:\n          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PASSPHRASE }}\n  deploy-prod:\n    needs: [integration-tests]\n    environment: production   # Requires manual approval\n    steps:\n      - run: pulumi up --yes --stack prod\n        env:\n          IMAGE_TAG: ${{ needs.deploy-dev.outputs.imageTag }}",
+      "difficulty": "hard",
+      "tags": ["cicd", "promotion", "github-actions", "multi-environment"]
+    },
+    {
+      "front": "How do you handle Pulumi Output secrets propagation to prevent accidental exposure?",
+      "back": "Any `Output<T>` derived from a secret Output is automatically marked secret by Pulumi. However, `pulumi.all()` combining a secret and non-secret produces a secret output. `pulumi.unsecret()` can strip the secret marking — use only when you've verified the value is safe to expose. Check with `pulumi stack output --show-secrets` and audit `Pulumi.<stack>.yaml` for inadvertent secret leakage.",
+      "code_example": "const secret = config.requireSecret(\"apiKey\");\n// This is automatically a secret Output:\nconst derivedSecret = secret.apply(k => `Bearer ${k}`);\n\n// pulumi.all with a secret = secret output:\nconst combined = pulumi.all([secret, publicUrl]).apply(\n  ([key, url]) => `${url}?key=${key}`\n);\n\n// Explicitly mark as non-secret (only if safe!):\nconst safeValue = pulumi.unsecret(someOutput);\n\n// Audit secrets in state:\npulumi stack output --json --show-secrets",
+      "difficulty": "hard",
+      "tags": ["secrets", "outputs", "security", "internals"]
+    }
+  ]
+}

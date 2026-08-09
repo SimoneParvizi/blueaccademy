@@ -1,0 +1,16 @@
+# local
+.DS_Store
+
+frontend/node_modules/
+frontend/.DS_Store
+dist/
+.env
+*.local
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# AI
+CLAUDE.md
+AGENTS.md

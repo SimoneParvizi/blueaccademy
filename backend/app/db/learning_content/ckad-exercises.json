@@ -1,0 +1,1109 @@
+[
+  {
+    "number": 1,
+    "title": "Create a Deployment with Environment Variables",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Design and Build",
+    "difficulty": "easy",
+    "timeMinutes": 7,
+    "scenario": "## Exercise 1\n\nCreate a new deployment with the following parameters:\n\n1. Create a namespace named **kdpd00201**\n2. Run the deployment in the `kdpd00201` namespace\n3. Name the deployment **frontend** and configure with **4 replicas**\n4. Use container image `nginx:1.14.2`\n5. Set an environment variable **NGINX_PORT=8080** and expose that port for the container",
+    "hints": [
+      "Use `kubectl create ns <name>` to create a namespace",
+      "Use `kubectl create deploy ... --dry-run=client -o yaml` to generate the manifest first",
+      "Add the `env:` section inside `spec.template.spec.containers[0]` of the deployment YAML",
+      "Apply with `kubectl apply -f <file>`"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create the namespace\n```bash\nkubectl create ns kdpd00201\n```\n\n### Step 2 — Generate the base deployment manifest\n```bash\nkubectl create deploy frontend \\\n  --image=nginx:1.14.2 \\\n  --port=8080 \\\n  --namespace=kdpd00201 \\\n  --replicas=4 \\\n  --dry-run=client -o yaml > deploy.yaml\n```\n\n### Step 3 — Add the environment variable and apply\nEdit `deploy.yaml` to add `env:` under the container:\n```yaml\ncontainers:\n- image: nginx:1.14.2\n  name: nginx\n  ports:\n  - containerPort: 8080\n  env:\n  - name: NGINX_PORT\n    value: \"8080\"\n```\n\n```bash\nkubectl apply -f deploy.yaml\n```\n\n### Verify\n```bash\nkubectl get deploy frontend -n kdpd00201\nkubectl get pods -n kdpd00201\n```",
+    "validations": [
+      {
+        "description": "Namespace kdpd00201 exists",
+        "command": "kubectl get ns kdpd00201 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "kdpd00201"
+      },
+      {
+        "description": "Deployment 'frontend' exists in kdpd00201",
+        "command": "kubectl get deploy frontend -n kdpd00201 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "frontend"
+      },
+      {
+        "description": "Deployment has 4 replicas",
+        "command": "kubectl get deploy frontend -n kdpd00201 -o jsonpath='{.spec.replicas}'",
+        "expectedValue": "4"
+      },
+      {
+        "description": "Container image is nginx:1.14.2",
+        "command": "kubectl get deploy frontend -n kdpd00201 -o jsonpath='{.spec.template.spec.containers[0].image}'",
+        "expectedValue": "nginx:1.14.2"
+      },
+      {
+        "description": "Environment variable NGINX_PORT=8080 is set",
+        "command": "kubectl get deploy frontend -n kdpd00201 -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name==\"NGINX_PORT\")].value}'",
+        "expectedValue": "8080"
+      },
+      {
+        "description": "Container port 8080 is exposed",
+        "command": "kubectl get deploy frontend -n kdpd00201 -o jsonpath='{.spec.template.spec.containers[0].ports[0].containerPort}'",
+        "expectedValue": "8080"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00201 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 2,
+    "title": "ConfigMap and Mounting as Environment Variables",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Environment, Configuration and Security",
+    "difficulty": "easy",
+    "timeMinutes": 8,
+    "scenario": "## Exercise 2\n\nComplete the following tasks:\n\n1. Create a ConfigMap named **app-config** in namespace **kdpd00202** with the following keys:\n   - `APP_ENV=production`\n   - `LOG_LEVEL=info`\n2. Create a namespace **kdpd00202** if it doesn't exist\n3. Create a Pod named **app-pod** in namespace **kdpd00202** using image `busybox:1.35`\n4. Mount **all keys** from the ConfigMap as environment variables in the pod\n5. The pod should run: `sleep 3600`",
+    "hints": [
+      "Use `kubectl create configmap app-config --from-literal=KEY=VALUE`",
+      "Use `envFrom:` with `configMapRef:` to inject all keys from a ConfigMap",
+      "Use `kubectl run` with `--dry-run=client -o yaml` to generate the Pod manifest"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create namespace and ConfigMap\n```bash\nkubectl create ns kdpd00202\nkubectl create configmap app-config \\\n  --from-literal=APP_ENV=production \\\n  --from-literal=LOG_LEVEL=info \\\n  -n kdpd00202\n```\n\n### Step 2 — Create the Pod with envFrom\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: app-pod\n  namespace: kdpd00202\nspec:\n  containers:\n  - name: app\n    image: busybox:1.35\n    command: [\"sleep\", \"3600\"]\n    envFrom:\n    - configMapRef:\n        name: app-config\n```\n\n```bash\nkubectl apply -f pod.yaml\n```",
+    "validations": [
+      {
+        "description": "Namespace kdpd00202 exists",
+        "command": "kubectl get ns kdpd00202 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "kdpd00202"
+      },
+      {
+        "description": "ConfigMap app-config exists",
+        "command": "kubectl get cm app-config -n kdpd00202 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "app-config"
+      },
+      {
+        "description": "ConfigMap has APP_ENV=production",
+        "command": "kubectl get cm app-config -n kdpd00202 -o jsonpath='{.data.APP_ENV}'",
+        "expectedValue": "production"
+      },
+      {
+        "description": "ConfigMap has LOG_LEVEL=info",
+        "command": "kubectl get cm app-config -n kdpd00202 -o jsonpath='{.data.LOG_LEVEL}'",
+        "expectedValue": "info"
+      },
+      {
+        "description": "Pod app-pod exists",
+        "command": "kubectl get pod app-pod -n kdpd00202 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "app-pod"
+      },
+      {
+        "description": "Pod uses ConfigMap via envFrom",
+        "command": "kubectl get pod app-pod -n kdpd00202 -o jsonpath='{.spec.containers[0].envFrom[0].configMapRef.name}'",
+        "expectedValue": "app-config"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00202 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 3,
+    "title": "Create a Service and ClusterIP",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Services and Networking",
+    "difficulty": "easy",
+    "timeMinutes": 8,
+    "scenario": "## Exercise 3\n\n1. Create a namespace **kdpd00203**\n2. Create a Deployment named **web** in namespace **kdpd00203** with:\n   - 2 replicas\n   - Image: `nginx:1.14.2`\n   - Label: `app=web`\n   - Container port: **80**\n3. Expose the deployment with a **ClusterIP Service** named **web-svc** on port **80** targeting port **80**",
+    "hints": [
+      "Use `kubectl expose deploy web --name=web-svc --port=80 --target-port=80 -n kdpd00203`",
+      "Or use `kubectl create svc clusterip web-svc --tcp=80:80 -n kdpd00203` and add the selector manually"
+    ],
+    "solution": "## Solution\n\n```bash\nkubectl create ns kdpd00203\n\nkubectl create deploy web \\\n  --image=nginx:1.14.2 \\\n  --replicas=2 \\\n  --port=80 \\\n  -n kdpd00203\n\nkubectl expose deploy web \\\n  --name=web-svc \\\n  --port=80 \\\n  --target-port=80 \\\n  -n kdpd00203\n```\n\n### Verify\n```bash\nkubectl get svc web-svc -n kdpd00203\nkubectl describe svc web-svc -n kdpd00203\n```",
+    "validations": [
+      {
+        "description": "Deployment 'web' exists with 2 replicas",
+        "command": "kubectl get deploy web -n kdpd00203 -o jsonpath='{.spec.replicas}'",
+        "expectedValue": "2"
+      },
+      {
+        "description": "Service 'web-svc' exists",
+        "command": "kubectl get svc web-svc -n kdpd00203 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "web-svc"
+      },
+      {
+        "description": "Service type is ClusterIP",
+        "command": "kubectl get svc web-svc -n kdpd00203 -o jsonpath='{.spec.type}'",
+        "expectedValue": "ClusterIP"
+      },
+      {
+        "description": "Service port is 80",
+        "command": "kubectl get svc web-svc -n kdpd00203 -o jsonpath='{.spec.ports[0].port}'",
+        "expectedValue": "80"
+      },
+      {
+        "description": "Service selector targets app=web",
+        "command": "kubectl get svc web-svc -n kdpd00203 -o jsonpath='{.spec.selector.app}'",
+        "expectedValue": "web"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00203 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 4,
+    "title": "Pod with Resource Requests and Limits",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Environment, Configuration and Security",
+    "difficulty": "medium",
+    "timeMinutes": 8,
+    "scenario": "## Exercise 4\n\nCreate a Pod named **resource-pod** in namespace **kdpd00204** with the following requirements:\n\n1. Create namespace **kdpd00204**\n2. Container name: **nginx**, image: `nginx:1.14.2`\n3. Set resource **requests**: CPU `100m`, memory `128Mi`\n4. Set resource **limits**: CPU `200m`, memory `256Mi`\n5. Add a **liveness probe** using HTTP GET on path `/` port `80` with initialDelaySeconds `10`",
+    "hints": [
+      "Use `kubectl run resource-pod --image=nginx:1.14.2 --dry-run=client -o yaml > pod.yaml`",
+      "Add `resources:` under `spec.containers[0]`",
+      "Add `livenessProbe:` under `spec.containers[0]`"
+    ],
+    "solution": "## Solution\n\n```bash\nkubectl create ns kdpd00204\n```\n\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: resource-pod\n  namespace: kdpd00204\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.14.2\n    resources:\n      requests:\n        cpu: \"100m\"\n        memory: \"128Mi\"\n      limits:\n        cpu: \"200m\"\n        memory: \"256Mi\"\n    livenessProbe:\n      httpGet:\n        path: /\n        port: 80\n      initialDelaySeconds: 10\n```\n\n```bash\nkubectl apply -f pod.yaml\n```",
+    "validations": [
+      {
+        "description": "Pod resource-pod exists in kdpd00204",
+        "command": "kubectl get pod resource-pod -n kdpd00204 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "resource-pod"
+      },
+      {
+        "description": "CPU request is 100m",
+        "command": "kubectl get pod resource-pod -n kdpd00204 -o jsonpath='{.spec.containers[0].resources.requests.cpu}'",
+        "expectedValue": "100m"
+      },
+      {
+        "description": "Memory request is 128Mi",
+        "command": "kubectl get pod resource-pod -n kdpd00204 -o jsonpath='{.spec.containers[0].resources.requests.memory}'",
+        "expectedValue": "128Mi"
+      },
+      {
+        "description": "CPU limit is 200m",
+        "command": "kubectl get pod resource-pod -n kdpd00204 -o jsonpath='{.spec.containers[0].resources.limits.cpu}'",
+        "expectedValue": "200m"
+      },
+      {
+        "description": "Liveness probe is configured",
+        "command": "kubectl get pod resource-pod -n kdpd00204 -o jsonpath='{.spec.containers[0].livenessProbe.httpGet.path}'",
+        "expectedValue": "/"
+      },
+      {
+        "description": "Liveness probe initialDelaySeconds is 10",
+        "command": "kubectl get pod resource-pod -n kdpd00204 -o jsonpath='{.spec.containers[0].livenessProbe.initialDelaySeconds}'",
+        "expectedValue": "10"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00204 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 5,
+    "title": "Secret as Volume Mount",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Environment, Configuration and Security",
+    "difficulty": "medium",
+    "timeMinutes": 10,
+    "scenario": "## Exercise 5\n\n1. Create namespace **kdpd00205**\n2. Create a Secret named **db-secret** in namespace **kdpd00205** with:\n   - `DB_PASSWORD=supersecret`\n   - `DB_USER=admin`\n3. Create a Pod named **db-pod** using image `busybox:1.35` in namespace **kdpd00205**\n4. Mount the Secret as a **volume** at path `/etc/db-secret`\n5. The pod should run: `sleep 3600`",
+    "hints": [
+      "Use `kubectl create secret generic db-secret --from-literal=...`",
+      "Add a `volumes:` entry with `secret:` and mount it via `volumeMounts:`"
+    ],
+    "solution": "## Solution\n\n```bash\nkubectl create ns kdpd00205\nkubectl create secret generic db-secret \\\n  --from-literal=DB_PASSWORD=supersecret \\\n  --from-literal=DB_USER=admin \\\n  -n kdpd00205\n```\n\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: db-pod\n  namespace: kdpd00205\nspec:\n  containers:\n  - name: busybox\n    image: busybox:1.35\n    command: [\"sleep\", \"3600\"]\n    volumeMounts:\n    - name: secret-vol\n      mountPath: /etc/db-secret\n  volumes:\n  - name: secret-vol\n    secret:\n      secretName: db-secret\n```\n\n```bash\nkubectl apply -f pod.yaml\n```",
+    "validations": [
+      {
+        "description": "Secret db-secret exists",
+        "command": "kubectl get secret db-secret -n kdpd00205 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "db-secret"
+      },
+      {
+        "description": "Secret has DB_PASSWORD key",
+        "command": "kubectl get secret db-secret -n kdpd00205 -o jsonpath='{.data.DB_PASSWORD}'",
+        "mustContain": "c3VwZXJzZWNyZXQ="
+      },
+      {
+        "description": "Pod db-pod exists",
+        "command": "kubectl get pod db-pod -n kdpd00205 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "db-pod"
+      },
+      {
+        "description": "Secret is mounted as volume",
+        "command": "kubectl get pod db-pod -n kdpd00205 -o jsonpath='{.spec.volumes[?(@.secret.secretName==\"db-secret\")].name}'",
+        "mustContain": "secret"
+      },
+      {
+        "description": "Volume is mounted at /etc/db-secret",
+        "command": "kubectl get pod db-pod -n kdpd00205 -o jsonpath='{.spec.containers[0].volumeMounts[0].mountPath}'",
+        "expectedValue": "/etc/db-secret"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00205 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 6,
+    "title": "Rolling Update and Rollback",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Deployment",
+    "difficulty": "medium",
+    "timeMinutes": 10,
+    "scenario": "## Exercise 6\n\n1. Create namespace **kdpd00206**\n2. Create a Deployment named **myapp** in **kdpd00206** with:\n   - 3 replicas, image `nginx:1.14.2`\n3. Update the deployment image to `nginx:1.16.1` using a rolling update\n4. Verify the rollout succeeded\n5. Roll back to the **previous** revision",
+    "hints": [
+      "Use `kubectl set image deploy/myapp nginx=nginx:1.16.1 -n kdpd00206`",
+      "Use `kubectl rollout status deploy/myapp -n kdpd00206` to check",
+      "Use `kubectl rollout undo deploy/myapp -n kdpd00206` to roll back"
+    ],
+    "solution": "## Solution\n\n```bash\nkubectl create ns kdpd00206\nkubectl create deploy myapp --image=nginx:1.14.2 --replicas=3 -n kdpd00206\n\n# Update image\nkubectl set image deploy/myapp nginx=nginx:1.16.1 -n kdpd00206\nkubectl rollout status deploy/myapp -n kdpd00206\n\n# Roll back\nkubectl rollout undo deploy/myapp -n kdpd00206\nkubectl rollout status deploy/myapp -n kdpd00206\n```",
+    "validations": [
+      {
+        "description": "Deployment myapp exists with 3 replicas",
+        "command": "kubectl get deploy myapp -n kdpd00206 -o jsonpath='{.spec.replicas}'",
+        "expectedValue": "3"
+      },
+      {
+        "description": "Deployment has been rolled back to nginx:1.14.2",
+        "command": "kubectl get deploy myapp -n kdpd00206 -o jsonpath='{.spec.template.spec.containers[0].image}'",
+        "expectedValue": "nginx:1.14.2"
+      },
+      {
+        "description": "Rollout history has at least 2 revisions",
+        "command": "kubectl rollout history deploy/myapp -n kdpd00206",
+        "mustContain": "REVISION"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00206 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 7,
+    "title": "Pod with Init Container",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Design and Build",
+    "difficulty": "medium",
+    "timeMinutes": 12,
+    "scenario": "## Exercise 7\n\n1. Create namespace **kdpd00207**\n2. Create a Pod named **init-pod** in **kdpd00207** with:\n   - An **init container** named `init-service` using image `busybox:1.35` that runs: `echo \"init complete\" > /work-dir/message`\n   - A main container named `main` using image `nginx:1.14.2`\n   - Both containers share a volume named `workdir` mounted at `/work-dir`",
+    "hints": [
+      "Add an `initContainers:` array alongside `containers:` in the Pod spec",
+      "Both containers need to mount the same volume via `volumeMounts:`",
+      "The init container runs to completion before the main container starts"
+    ],
+    "solution": "## Solution\n\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: init-pod\n  namespace: kdpd00207\nspec:\n  initContainers:\n  - name: init-service\n    image: busybox:1.35\n    command: ['sh', '-c', 'echo \"init complete\" > /work-dir/message']\n    volumeMounts:\n    - name: workdir\n      mountPath: /work-dir\n  containers:\n  - name: main\n    image: nginx:1.14.2\n    volumeMounts:\n    - name: workdir\n      mountPath: /work-dir\n  volumes:\n  - name: workdir\n    emptyDir: {}\n```\n\n```bash\nkubectl create ns kdpd00207\nkubectl apply -f pod.yaml\n```",
+    "validations": [
+      {
+        "description": "Pod init-pod exists",
+        "command": "kubectl get pod init-pod -n kdpd00207 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "init-pod"
+      },
+      {
+        "description": "Init container is named init-service",
+        "command": "kubectl get pod init-pod -n kdpd00207 -o jsonpath='{.spec.initContainers[0].name}'",
+        "expectedValue": "init-service"
+      },
+      {
+        "description": "Init container uses busybox:1.35",
+        "command": "kubectl get pod init-pod -n kdpd00207 -o jsonpath='{.spec.initContainers[0].image}'",
+        "expectedValue": "busybox:1.35"
+      },
+      {
+        "description": "Shared volume 'workdir' is defined",
+        "command": "kubectl get pod init-pod -n kdpd00207 -o jsonpath='{.spec.volumes[?(@.name==\"workdir\")].name}'",
+        "expectedValue": "workdir"
+      },
+      {
+        "description": "Main container is nginx:1.14.2",
+        "command": "kubectl get pod init-pod -n kdpd00207 -o jsonpath='{.spec.containers[0].image}'",
+        "expectedValue": "nginx:1.14.2"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00207 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 8,
+    "title": "Horizontal Pod Autoscaler",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Deployment",
+    "difficulty": "medium",
+    "timeMinutes": 10,
+    "scenario": "## Exercise 8\n\n1. Create namespace **kdpd00208**\n2. Create a Deployment named **hpa-demo** in **kdpd00208**:\n   - 2 replicas, image `nginx:1.14.2`\n   - CPU request: `100m`, CPU limit: `200m`\n3. Create a **HorizontalPodAutoscaler** for the deployment with:\n   - Name: **hpa-demo-hpa**\n   - Min replicas: **2**, Max replicas: **8**\n   - Target CPU utilization: **50%**",
+    "hints": [
+      "Use `kubectl autoscale deploy hpa-demo --min=2 --max=8 --cpu-percent=50 -n kdpd00208`",
+      "The deployment MUST have CPU requests set for HPA to work"
+    ],
+    "solution": "## Solution\n\n```bash\nkubectl create ns kdpd00208\n```\n\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: hpa-demo\n  namespace: kdpd00208\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: hpa-demo\n  template:\n    metadata:\n      labels:\n        app: hpa-demo\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        resources:\n          requests:\n            cpu: \"100m\"\n          limits:\n            cpu: \"200m\"\n```\n\n```bash\nkubectl apply -f deploy.yaml\nkubectl autoscale deploy hpa-demo --min=2 --max=8 --cpu-percent=50 \\\n  --name=hpa-demo-hpa -n kdpd00208\n```",
+    "validations": [
+      {
+        "description": "HPA hpa-demo-hpa exists",
+        "command": "kubectl get hpa hpa-demo-hpa -n kdpd00208 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "hpa-demo-hpa"
+      },
+      {
+        "description": "HPA min replicas is 2",
+        "command": "kubectl get hpa hpa-demo-hpa -n kdpd00208 -o jsonpath='{.spec.minReplicas}'",
+        "expectedValue": "2"
+      },
+      {
+        "description": "HPA max replicas is 8",
+        "command": "kubectl get hpa hpa-demo-hpa -n kdpd00208 -o jsonpath='{.spec.maxReplicas}'",
+        "expectedValue": "8"
+      },
+      {
+        "description": "HPA targets the hpa-demo deployment",
+        "command": "kubectl get hpa hpa-demo-hpa -n kdpd00208 -o jsonpath='{.spec.scaleTargetRef.name}'",
+        "expectedValue": "hpa-demo"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00208 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 9,
+    "title": "NetworkPolicy — Restrict Ingress",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Services and Networking",
+    "difficulty": "hard",
+    "timeMinutes": 15,
+    "scenario": "## Exercise 9\n\n1. Create namespace **kdpd00209**\n2. Create two Deployments in **kdpd00209**:\n   - `backend` (image `nginx:1.14.2`, label `role=backend`)\n   - `frontend` (image `nginx:1.14.2`, label `role=frontend`)\n3. Create a **NetworkPolicy** named **backend-policy** in **kdpd00209** that:\n   - Applies to pods with label `role=backend`\n   - **Only allows ingress** from pods with label `role=frontend`\n   - On port **80**",
+    "hints": [
+      "NetworkPolicies use `podSelector` to target pods and `ingress.from.podSelector` to restrict sources",
+      "By default, once a NetworkPolicy selects a pod, all other ingress is denied"
+    ],
+    "solution": "## Solution\n\n```bash\nkubectl create ns kdpd00209\nkubectl create deploy backend --image=nginx:1.14.2 -n kdpd00209\nkubectl label deploy backend role=backend -n kdpd00209\nkubectl create deploy frontend --image=nginx:1.14.2 -n kdpd00209\nkubectl label deploy frontend role=frontend -n kdpd00209\n```\n\n```yaml\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: backend-policy\n  namespace: kdpd00209\nspec:\n  podSelector:\n    matchLabels:\n      role: backend\n  policyTypes:\n  - Ingress\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          role: frontend\n    ports:\n    - protocol: TCP\n      port: 80\n```\n\n```bash\nkubectl apply -f netpol.yaml\n```",
+    "validations": [
+      {
+        "description": "NetworkPolicy backend-policy exists",
+        "command": "kubectl get netpol backend-policy -n kdpd00209 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "backend-policy"
+      },
+      {
+        "description": "Policy targets pods with role=backend",
+        "command": "kubectl get netpol backend-policy -n kdpd00209 -o jsonpath='{.spec.podSelector.matchLabels.role}'",
+        "expectedValue": "backend"
+      },
+      {
+        "description": "Ingress allowed from role=frontend",
+        "command": "kubectl get netpol backend-policy -n kdpd00209 -o jsonpath='{.spec.ingress[0].from[0].podSelector.matchLabels.role}'",
+        "expectedValue": "frontend"
+      },
+      {
+        "description": "Ingress port is 80",
+        "command": "kubectl get netpol backend-policy -n kdpd00209 -o jsonpath='{.spec.ingress[0].ports[0].port}'",
+        "expectedValue": "80"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00209 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 10,
+    "title": "ServiceAccount and RBAC",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Environment, Configuration and Security",
+    "difficulty": "hard",
+    "timeMinutes": 15,
+    "scenario": "## Exercise 10\n\n1. Create namespace **kdpd00210**\n2. Create a ServiceAccount named **pod-reader-sa** in **kdpd00210**\n3. Create a **ClusterRole** named **pod-reader** that allows `get`, `list`, `watch` on `pods`\n4. Create a **RoleBinding** named **pod-reader-binding** in **kdpd00210** that binds the ClusterRole to the ServiceAccount\n5. Create a Pod named **rbac-pod** in **kdpd00210** using image `nginx:1.14.2` that uses the ServiceAccount",
+    "hints": [
+      "Use `kubectl create serviceaccount pod-reader-sa -n kdpd00210`",
+      "Use `kubectl create clusterrole pod-reader --verb=get,list,watch --resource=pods`",
+      "Use `kubectl create rolebinding` (not clusterrolebinding) scoped to the namespace"
+    ],
+    "solution": "## Solution\n\n```bash\nkubectl create ns kdpd00210\nkubectl create serviceaccount pod-reader-sa -n kdpd00210\nkubectl create clusterrole pod-reader --verb=get,list,watch --resource=pods\n\nkubectl create rolebinding pod-reader-binding \\\n  --clusterrole=pod-reader \\\n  --serviceaccount=kdpd00210:pod-reader-sa \\\n  -n kdpd00210\n```\n\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: rbac-pod\n  namespace: kdpd00210\nspec:\n  serviceAccountName: pod-reader-sa\n  containers:\n  - name: nginx\n    image: nginx:1.14.2\n```\n\n```bash\nkubectl apply -f pod.yaml\n```",
+    "validations": [
+      {
+        "description": "ServiceAccount pod-reader-sa exists",
+        "command": "kubectl get sa pod-reader-sa -n kdpd00210 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "pod-reader-sa"
+      },
+      {
+        "description": "ClusterRole pod-reader exists",
+        "command": "kubectl get clusterrole pod-reader -o jsonpath='{.metadata.name}'",
+        "expectedValue": "pod-reader"
+      },
+      {
+        "description": "ClusterRole allows get on pods",
+        "command": "kubectl get clusterrole pod-reader -o jsonpath='{.rules[0].verbs}'",
+        "mustContain": "get"
+      },
+      {
+        "description": "RoleBinding pod-reader-binding exists",
+        "command": "kubectl get rolebinding pod-reader-binding -n kdpd00210 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "pod-reader-binding"
+      },
+      {
+        "description": "RoleBinding binds to pod-reader-sa",
+        "command": "kubectl get rolebinding pod-reader-binding -n kdpd00210 -o jsonpath='{.subjects[0].name}'",
+        "expectedValue": "pod-reader-sa"
+      },
+      {
+        "description": "Pod rbac-pod uses pod-reader-sa",
+        "command": "kubectl get pod rbac-pod -n kdpd00210 -o jsonpath='{.spec.serviceAccountName}'",
+        "expectedValue": "pod-reader-sa"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00210 --ignore-not-found",
+      "kubectl delete clusterrole pod-reader --ignore-not-found"
+    ]
+  },
+  {
+    "number": 11,
+    "title": "Multi-Container Pod with Sidecar",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Design and Build",
+    "difficulty": "hard",
+    "timeMinutes": 12,
+    "scenario": "## Exercise 11\n\n1. Create namespace **kdpd00211**\n2. Create a Pod named **sidecar-pod** in **kdpd00211** with two containers:\n   - **Main container**: `nginx:1.14.2`, named `nginx`, runs on port **80**\n   - **Sidecar container**: `busybox:1.35`, named `log-sidecar`, runs: `tail -f /var/log/nginx/access.log`\n   - Mount a shared volume named `log-vol` at `/var/log/nginx` in both containers",
+    "hints": [
+      "Use `emptyDir: {}` for the shared volume",
+      "Both containers must reference the same volume name in their `volumeMounts`"
+    ],
+    "solution": "## Solution\n\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: sidecar-pod\n  namespace: kdpd00211\nspec:\n  containers:\n  - name: nginx\n    image: nginx:1.14.2\n    ports:\n    - containerPort: 80\n    volumeMounts:\n    - name: log-vol\n      mountPath: /var/log/nginx\n  - name: log-sidecar\n    image: busybox:1.35\n    command: ['sh', '-c', 'tail -f /var/log/nginx/access.log']\n    volumeMounts:\n    - name: log-vol\n      mountPath: /var/log/nginx\n  volumes:\n  - name: log-vol\n    emptyDir: {}\n```\n\n```bash\nkubectl create ns kdpd00211\nkubectl apply -f pod.yaml\n```",
+    "validations": [
+      {
+        "description": "Pod sidecar-pod exists",
+        "command": "kubectl get pod sidecar-pod -n kdpd00211 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "sidecar-pod"
+      },
+      {
+        "description": "Pod has 2 containers",
+        "command": "kubectl get pod sidecar-pod -n kdpd00211 -o jsonpath='{.spec.containers}'",
+        "mustContain": "log-sidecar"
+      },
+      {
+        "description": "Main container is nginx:1.14.2",
+        "command": "kubectl get pod sidecar-pod -n kdpd00211 -o jsonpath='{.spec.containers[?(@.name==\"nginx\")].image}'",
+        "expectedValue": "nginx:1.14.2"
+      },
+      {
+        "description": "Sidecar uses busybox:1.35",
+        "command": "kubectl get pod sidecar-pod -n kdpd00211 -o jsonpath='{.spec.containers[?(@.name==\"log-sidecar\")].image}'",
+        "expectedValue": "busybox:1.35"
+      },
+      {
+        "description": "Shared volume log-vol is defined",
+        "command": "kubectl get pod sidecar-pod -n kdpd00211 -o jsonpath='{.spec.volumes[?(@.name==\"log-vol\")].name}'",
+        "expectedValue": "log-vol"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00211 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 12,
+    "title": "CronJob",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Design and Build",
+    "difficulty": "easy",
+    "timeMinutes": 8,
+    "scenario": "## Exercise 12\n\n1. Create namespace **kdpd00212**\n2. Create a **CronJob** named **date-logger** in **kdpd00212** that:\n   - Runs **every minute** (`* * * * *`)\n   - Uses image `busybox:1.35`\n   - Executes: `date >> /tmp/date.log`\n   - Sets `successfulJobsHistoryLimit` to **3**\n   - Sets `concurrencyPolicy` to **Forbid**",
+    "hints": [
+      "Use `kubectl create cronjob date-logger --image=busybox:1.35 --schedule='* * * * *' -- date`",
+      "Then patch or recreate with the additional fields"
+    ],
+    "solution": "## Solution\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: date-logger\n  namespace: kdpd00212\nspec:\n  schedule: \"* * * * *\"\n  concurrencyPolicy: Forbid\n  successfulJobsHistoryLimit: 3\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          containers:\n          - name: logger\n            image: busybox:1.35\n            command: ['sh', '-c', 'date >> /tmp/date.log']\n          restartPolicy: OnFailure\n```\n\n```bash\nkubectl create ns kdpd00212\nkubectl apply -f cronjob.yaml\n```",
+    "validations": [
+      {
+        "description": "CronJob date-logger exists",
+        "command": "kubectl get cronjob date-logger -n kdpd00212 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "date-logger"
+      },
+      {
+        "description": "Schedule is every minute",
+        "command": "kubectl get cronjob date-logger -n kdpd00212 -o jsonpath='{.spec.schedule}'",
+        "expectedValue": "* * * * *"
+      },
+      {
+        "description": "concurrencyPolicy is Forbid",
+        "command": "kubectl get cronjob date-logger -n kdpd00212 -o jsonpath='{.spec.concurrencyPolicy}'",
+        "expectedValue": "Forbid"
+      },
+      {
+        "description": "successfulJobsHistoryLimit is 3",
+        "command": "kubectl get cronjob date-logger -n kdpd00212 -o jsonpath='{.spec.successfulJobsHistoryLimit}'",
+        "expectedValue": "3"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns kdpd00212 --ignore-not-found"
+    ]
+  },
+  {
+    "number": 13,
+    "title": "Capture Pod Logs to a File",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Observability and Maintenance",
+    "difficulty": "easy",
+    "timeMinutes": 6,
+    "scenario": "## Exercise 13\n\nYou sometimes need to inspect a pod's logs and save them locally for later analysis.\n\nUse the current terminal workspace and complete the following tasks:\n\n1. Create a file named **counter.yaml** with this pod spec:\n\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: counter\nspec:\n  containers:\n  - name: busybox\n    image: busybox\n    args: [\"/bin/sh\", \"-c\", \"while true; do echo $(date -u); sleep 1; done\"]\n```\n\n2. Deploy the pod using **counter.yaml**\n3. Retrieve the currently available logs from the running pod\n4. Store those logs in **log_Output.txt**",
+    "hints": [
+      "The shared terminal uses a temporary workspace, so relative files like `counter.yaml` and `log_Output.txt` are safe to create there",
+      "Create the pod with `kubectl create -f counter.yaml`",
+      "Write the logs to a file with shell redirection: `kubectl logs counter > log_Output.txt`",
+      "Use `cat log_Output.txt` to confirm the file contains timestamps before checking the solution"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create the pod spec\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: counter\nspec:\n  containers:\n  - name: busybox\n    image: busybox\n    args: [\"/bin/sh\", \"-c\", \"while true; do echo $(date -u); sleep 1; done\"]\n```\n\n### Step 2 — Save it to `counter.yaml`\n```bash\ncat > counter.yaml <<'EOF'\napiVersion: v1\nkind: Pod\nmetadata:\n  name: counter\nspec:\n  containers:\n  - name: busybox\n    image: busybox\n    args: [\"/bin/sh\", \"-c\", \"while true; do echo $(date -u); sleep 1; done\"]\nEOF\n```\n\n### Step 3 — Deploy the pod\n```bash\nkubectl create -f counter.yaml\n```\n\n### Step 4 — Capture the logs\n```bash\nkubectl logs counter > log_Output.txt\ncat log_Output.txt\n```",
+    "validations": [
+      {
+        "description": "counter.yaml exists in the workspace",
+        "command": "test -f counter.yaml && echo ok || echo missing",
+        "runner": "shell",
+        "expectedValue": "ok"
+      },
+      {
+        "description": "counter.yaml defines the counter pod",
+        "command": "grep -Eq 'name:\\s*counter' counter.yaml && grep -Eq 'image:\\s*busybox' counter.yaml && echo ok || echo missing",
+        "runner": "shell",
+        "expectedValue": "ok"
+      },
+      {
+        "description": "Pod counter exists",
+        "command": "kubectl get pod counter -o jsonpath='{.metadata.name}'",
+        "expectedValue": "counter"
+      },
+      {
+        "description": "Pod uses the busybox image",
+        "command": "kubectl get pod counter -o jsonpath='{.spec.containers[0].image}'",
+        "expectedValue": "busybox"
+      },
+      {
+        "description": "Pod continuously writes UTC timestamps",
+        "command": "kubectl get pod counter -o jsonpath='{.spec.containers[0].args[2]}'",
+        "mustContain": "date -u"
+      },
+      {
+        "description": "log_Output.txt exists and is not empty",
+        "command": "test -s log_Output.txt && echo ok || echo missing",
+        "runner": "shell",
+        "expectedValue": "ok"
+      },
+      {
+        "description": "log_Output.txt contains captured pod logs",
+        "command": "grep -m 1 'UTC' log_Output.txt",
+        "runner": "shell",
+        "mustContain": "UTC"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete pod counter --ignore-not-found",
+      {
+        "runner": "shell",
+        "command": "cat <<'EOF' > counter.yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: counter\nspec:\n  containers:\n  - name: busybox\n    image: busybox\n    args: [\"/bin/sh\", \"-c\", \"while true; do echo $(date -u); sleep 1; done\"]\nEOF\n: > log_Output.txt"
+      }
+    ]
+  },
+  {
+    "number": 14,
+    "title": "Consume a Secret as an Environment Variable",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Environment, Configuration and Security",
+    "difficulty": "easy",
+    "timeMinutes": 6,
+    "scenario": "## Exercise 14\n\nCreate a secret and consume it in a pod using environment variables.\n\nComplete the following tasks:\n\n1. Create a secret named **another-secret**\n2. Add the key/value pair **key1=value4** to that secret\n3. Start a pod named **nginx-secret** using the image `nginx`\n4. Expose the secret value from key **key1** inside the pod as the environment variable **COOL_VARIABLE**",
+    "hints": [
+      "Create the secret with `kubectl create secret generic another-secret --from-literal=key1=value4`",
+      "Generate the pod manifest with `kubectl run nginx-secret --image=nginx --dry-run=client -o yaml > pod.yaml`",
+      "Under the container, use `env:` and `valueFrom.secretKeyRef` to wire `COOL_VARIABLE` to `another-secret` / `key1`",
+      "Apply the manifest with `kubectl apply -f pod.yaml`"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create the secret\n```bash\nkubectl create secret generic another-secret --from-literal=key1=value4\n```\n\n### Step 2 — Generate the pod manifest\n```bash\nkubectl run nginx-secret --image=nginx --dry-run=client -o yaml > pod.yaml\n```\n\n### Step 3 — Add the environment variable\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    run: nginx-secret\n  name: nginx-secret\nspec:\n  containers:\n  - image: nginx\n    name: nginx-secret\n    env:\n    - name: COOL_VARIABLE\n      valueFrom:\n        secretKeyRef:\n          name: another-secret\n          key: key1\n  restartPolicy: Always\n```\n\n### Step 4 — Apply the pod\n```bash\nkubectl apply -f pod.yaml\n```\n\n### Reference\nUsing Secrets as environment variables",
+    "validations": [
+      {
+        "description": "Secret another-secret exists",
+        "command": "kubectl get secret another-secret -o jsonpath='{.metadata.name}'",
+        "expectedValue": "another-secret"
+      },
+      {
+        "description": "Secret contains key1=value4",
+        "command": "kubectl get secret another-secret -o jsonpath='{.data.key1}'",
+        "expectedValue": "dmFsdWU0"
+      },
+      {
+        "description": "Pod nginx-secret exists",
+        "command": "kubectl get pod nginx-secret -o jsonpath='{.metadata.name}'",
+        "expectedValue": "nginx-secret"
+      },
+      {
+        "description": "Pod uses the nginx image",
+        "command": "kubectl get pod nginx-secret -o jsonpath='{.spec.containers[0].image}'",
+        "expectedValue": "nginx"
+      },
+      {
+        "description": "Pod defines COOL_VARIABLE",
+        "command": "kubectl get pod nginx-secret -o jsonpath='{.spec.containers[0].env[?(@.name==\"COOL_VARIABLE\")].name}'",
+        "expectedValue": "COOL_VARIABLE"
+      },
+      {
+        "description": "COOL_VARIABLE references another-secret",
+        "command": "kubectl get pod nginx-secret -o jsonpath='{.spec.containers[0].env[?(@.name==\"COOL_VARIABLE\")].valueFrom.secretKeyRef.name}'",
+        "expectedValue": "another-secret"
+      },
+      {
+        "description": "COOL_VARIABLE uses key1 from the secret",
+        "command": "kubectl get pod nginx-secret -o jsonpath='{.spec.containers[0].env[?(@.name==\"COOL_VARIABLE\")].valueFrom.secretKeyRef.key}'",
+        "expectedValue": "key1"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete pod nginx-secret --ignore-not-found",
+      "kubectl delete secret another-secret --ignore-not-found"
+    ]
+  },
+  {
+    "number": 15,
+    "title": "Create a Pod Manifest and Export Pod JSON",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Design and Build",
+    "difficulty": "easy",
+    "timeMinutes": 6,
+    "scenario": "## Exercise 15\n\nAny time a team needs to run a container on Kubernetes they need to define a pod manifest.\n\nUse the current terminal workspace and complete the following tasks:\n\n1. Create a YAML pod manifest named **pod.yml**\n2. The manifest must create a pod named **app1**\n3. The pod must run a container named **app1cont**\n4. Use the image `lfccncf/arg-output`\n5. Pass these arguments to the container: `-lines 56 -F`\n6. Create the pod using the YAML file from the previous step\n7. Export pod data in JSON format to **out1.json**",
+    "hints": [
+      "Generate a starting manifest with `kubectl run app1 --image=lfccncf/arg-output --dry-run=client -o yaml > pod.yml`",
+      "Rename the generated container from `app1` to `app1cont` in `pod.yml`",
+      "Add `args:` under the container, either as a YAML list or as `[\"-lines\", \"56\", \"-F\"]`",
+      "Create the pod with `kubectl create -f pod.yml` and export JSON with `kubectl get pod app1 -o json > out1.json`"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Generate the base manifest\n```bash\nkubectl run app1 --image=lfccncf/arg-output --dry-run=client -o yaml > pod.yml\n```\n\n### Step 2 — Edit `pod.yml`\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    run: app1\n  name: app1\nspec:\n  containers:\n  - image: lfccncf/arg-output\n    name: app1cont\n    args: [\"-lines\", \"56\", \"-F\"]\n  restartPolicy: Always\n```\n\n### Step 3 — Create the pod\n```bash\nkubectl create -f pod.yml\n```\n\n### Step 4 — Export the pod JSON\n```bash\nkubectl get pod app1 -o json > out1.json\n```",
+    "validations": [
+      {
+        "description": "pod.yml exists in the workspace",
+        "command": "test -f pod.yml && echo ok || echo missing",
+        "runner": "shell",
+        "expectedValue": "ok"
+      },
+      {
+        "description": "pod.yml defines pod app1 with container app1cont",
+        "command": "grep -Eq 'name:\\s*app1$' pod.yml && grep -Eq 'name:\\s*app1cont$' pod.yml && echo ok || echo missing",
+        "runner": "shell",
+        "expectedValue": "ok"
+      },
+      {
+        "description": "pod.yml uses the lfccncf/arg-output image",
+        "command": "grep -Eq 'image:\\s*lfccncf/arg-output' pod.yml && echo ok || echo missing",
+        "runner": "shell",
+        "expectedValue": "ok"
+      },
+      {
+        "description": "pod.yml includes the required arguments",
+        "command": "grep -q -- '-lines' pod.yml && grep -q -- '56' pod.yml && grep -q -- '-F' pod.yml && echo ok || echo missing",
+        "runner": "shell",
+        "expectedValue": "ok"
+      },
+      {
+        "description": "Pod app1 exists",
+        "command": "kubectl get pod app1 -o jsonpath='{.metadata.name}'",
+        "expectedValue": "app1"
+      },
+      {
+        "description": "Pod app1 uses container name app1cont",
+        "command": "kubectl get pod app1 -o jsonpath='{.spec.containers[0].name}'",
+        "expectedValue": "app1cont"
+      },
+      {
+        "description": "Pod app1 uses the lfccncf/arg-output image",
+        "command": "kubectl get pod app1 -o jsonpath='{.spec.containers[0].image}'",
+        "expectedValue": "lfccncf/arg-output"
+      },
+      {
+        "description": "Pod app1 has the required arguments",
+        "command": "kubectl get pod app1 -o jsonpath='{.spec.containers[0].args}'",
+        "mustContain": "-lines"
+      },
+      {
+        "description": "out1.json exists and contains pod JSON",
+        "command": "test -s out1.json && grep -q '\"kind\": \"Pod\"' out1.json && grep -q '\"name\": \"app1\"' out1.json && echo ok || echo missing",
+        "runner": "shell",
+        "expectedValue": "ok"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete pod app1 --ignore-not-found",
+      {
+        "runner": "shell",
+        "command": ": > pod.yml\n: > out1.json"
+      }
+    ]
+  },
+  {
+    "number": 16,
+    "title": "Provision Persistent Storage for an Nginx Pod",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Environment, Configuration and Security",
+    "difficulty": "medium",
+    "timeMinutes": 10,
+    "scenario": "## Exercise 16\n\nA project you are working on requires persistent data to be available to a pod.\n\nComplete the following tasks:\n\n1. Create the file `/opt/KDSP00101/data/index.html` on node **sk8s-node-0**\n2. Write the content **Acct=Finance** into that file\n3. Create a PersistentVolume named **task-pv-volume**\n4. Use a **hostPath** volume pointing to `/opt/KDSP00101/data`\n5. Allocate **1Gi** of storage\n6. Set the access mode to **ReadWriteOnce**\n7. Set the storage class name to **exam**\n8. Create a PersistentVolumeClaim named **task-pv-claim** requesting at least **100Mi**\n9. The claim must use access mode **ReadWriteOnce**\n10. Create a pod named **nginx** with label **app: my-storage-app**\n11. Mount the PersistentVolumeClaim at `/usr/share/nginx/html` inside the pod",
+    "hints": [
+      "Because the PV uses `hostPath`, the file must exist on the node at `/opt/KDSP00101/data/index.html` before the nginx pod mounts it",
+      "If your cluster allows it, `kubectl debug node/sk8s-node-0 --image=busybox -- chroot /host sh` is one way to create the node file",
+      "Set `storageClassName: exam` on both the PersistentVolume and the PersistentVolumeClaim so they can bind",
+      "Use a pod named `nginx` so the validation can inspect the mounted file content directly"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create the file on the node\nOne approach is:\n```bash\nkubectl debug node/sk8s-node-0 --image=busybox -- chroot /host sh -c 'mkdir -p /opt/KDSP00101/data && echo Acct=Finance > /opt/KDSP00101/data/index.html'\n```\n\n### Step 2 — Create the PersistentVolume and claim\n```yaml\napiVersion: v1\nkind: PersistentVolume\nmetadata:\n  name: task-pv-volume\nspec:\n  capacity:\n    storage: 1Gi\n  accessModes:\n  - ReadWriteOnce\n  storageClassName: exam\n  hostPath:\n    path: /opt/KDSP00101/data\n    type: Directory\n---\napiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: task-pv-claim\nspec:\n  accessModes:\n  - ReadWriteOnce\n  storageClassName: exam\n  resources:\n    requests:\n      storage: 100Mi\n```\n\n### Step 3 — Create the pod\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: nginx\n  labels:\n    app: my-storage-app\nspec:\n  containers:\n  - name: nginx\n    image: nginx\n    volumeMounts:\n    - name: html\n      mountPath: /usr/share/nginx/html\n  volumes:\n  - name: html\n    persistentVolumeClaim:\n      claimName: task-pv-claim\n```\n\n### Step 4 — Verify the mounted content\n```bash\nkubectl exec nginx -- cat /usr/share/nginx/html/index.html\n```",
+    "validations": [
+      {
+        "description": "PersistentVolume task-pv-volume exists",
+        "command": "kubectl get pv task-pv-volume -o jsonpath='{.metadata.name}'",
+        "expectedValue": "task-pv-volume"
+      },
+      {
+        "description": "PersistentVolume capacity is 1Gi",
+        "command": "kubectl get pv task-pv-volume -o jsonpath='{.spec.capacity.storage}'",
+        "expectedValue": "1Gi"
+      },
+      {
+        "description": "PersistentVolume uses ReadWriteOnce",
+        "command": "kubectl get pv task-pv-volume -o jsonpath='{.spec.accessModes[0]}'",
+        "expectedValue": "ReadWriteOnce"
+      },
+      {
+        "description": "PersistentVolume uses storage class exam",
+        "command": "kubectl get pv task-pv-volume -o jsonpath='{.spec.storageClassName}'",
+        "expectedValue": "exam"
+      },
+      {
+        "description": "PersistentVolume points to /opt/KDSP00101/data",
+        "command": "kubectl get pv task-pv-volume -o jsonpath='{.spec.hostPath.path}'",
+        "expectedValue": "/opt/KDSP00101/data"
+      },
+      {
+        "description": "PersistentVolumeClaim task-pv-claim exists",
+        "command": "kubectl get pvc task-pv-claim -o jsonpath='{.metadata.name}'",
+        "expectedValue": "task-pv-claim"
+      },
+      {
+        "description": "PersistentVolumeClaim requests 100Mi",
+        "command": "kubectl get pvc task-pv-claim -o jsonpath='{.spec.resources.requests.storage}'",
+        "expectedValue": "100Mi"
+      },
+      {
+        "description": "PersistentVolumeClaim uses ReadWriteOnce",
+        "command": "kubectl get pvc task-pv-claim -o jsonpath='{.spec.accessModes[0]}'",
+        "expectedValue": "ReadWriteOnce"
+      },
+      {
+        "description": "PersistentVolumeClaim uses storage class exam",
+        "command": "kubectl get pvc task-pv-claim -o jsonpath='{.spec.storageClassName}'",
+        "expectedValue": "exam"
+      },
+      {
+        "description": "Pod nginx exists",
+        "command": "kubectl get pod nginx -o jsonpath='{.metadata.name}'",
+        "expectedValue": "nginx"
+      },
+      {
+        "description": "Pod nginx has label app=my-storage-app",
+        "command": "kubectl get pod nginx -o jsonpath='{.metadata.labels.app}'",
+        "expectedValue": "my-storage-app"
+      },
+      {
+        "description": "Pod mounts the claim at /usr/share/nginx/html",
+        "command": "kubectl get pod nginx -o jsonpath='{.spec.containers[0].volumeMounts[0].mountPath}'",
+        "expectedValue": "/usr/share/nginx/html"
+      },
+      {
+        "description": "Pod uses the task-pv-claim claim",
+        "command": "kubectl get pod nginx -o jsonpath='{.spec.volumes[0].persistentVolumeClaim.claimName}'",
+        "expectedValue": "task-pv-claim"
+      },
+      {
+        "description": "Mounted index.html contains Acct=Finance",
+        "command": "kubectl exec nginx -- cat /usr/share/nginx/html/index.html",
+        "expectedValue": "Acct=Finance"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete pod nginx --ignore-not-found",
+      "kubectl delete pvc task-pv-claim --ignore-not-found",
+      "kubectl delete pv task-pv-volume --ignore-not-found"
+    ]
+  },
+  {
+    "number": 17,
+    "title": "Mount a ConfigMap into an Nginx Pod",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Environment, Configuration and Security",
+    "difficulty": "easy",
+    "timeMinutes": 6,
+    "scenario": "## Exercise 17\n\nCreate a ConfigMap and consume it in a pod using a volume mount.\n\nComplete the following tasks:\n\n1. Create a ConfigMap named **namedanother-config**\n2. Add the key/value pair **key4=value3**\n3. Start a pod named **nginx-configmap** using the image `nginx`\n4. Mount the ConfigMap into the pod under **/also/a/path**",
+    "hints": [
+      "Create the ConfigMap with `kubectl create configmap namedanother-config --from-literal=key4=value3`",
+      "The pod needs both `volumeMounts:` on the container and `volumes:` on the pod spec",
+      "Use a `configMap:` volume source referencing `namedanother-config`",
+      "After the pod starts, `kubectl exec nginx-configmap -- cat /also/a/path/key4` should print `value3`"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create the ConfigMap\n```bash\nkubectl create configmap namedanother-config --from-literal=key4=value3\n```\n\n### Step 2 — Create the pod manifest\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    run: nginx-configmap\n  name: nginx-configmap\nspec:\n  containers:\n  - image: nginx\n    name: nginx-configmap\n    volumeMounts:\n    - mountPath: /also/a/path\n      name: nginx-configmap-volume\n  volumes:\n  - name: nginx-configmap-volume\n    configMap:\n      name: namedanother-config\n  restartPolicy: Always\n```\n\n### Step 3 — Create the pod\n```bash\nkubectl apply -f nginx-configmap-po.yaml\n```\n\n### Step 4 — Verify the mounted file\n```bash\nkubectl exec nginx-configmap -- cat /also/a/path/key4\n```",
+    "validations": [
+      {
+        "description": "ConfigMap namedanother-config exists",
+        "command": "kubectl get configmap namedanother-config -o jsonpath='{.metadata.name}'",
+        "expectedValue": "namedanother-config"
+      },
+      {
+        "description": "ConfigMap contains key4=value3",
+        "command": "kubectl get configmap namedanother-config -o jsonpath='{.data.key4}'",
+        "expectedValue": "value3"
+      },
+      {
+        "description": "Pod nginx-configmap exists",
+        "command": "kubectl get pod nginx-configmap -o jsonpath='{.metadata.name}'",
+        "expectedValue": "nginx-configmap"
+      },
+      {
+        "description": "Pod uses the nginx image",
+        "command": "kubectl get pod nginx-configmap -o jsonpath='{.spec.containers[0].image}'",
+        "expectedValue": "nginx"
+      },
+      {
+        "description": "Pod mounts the volume at /also/a/path",
+        "command": "kubectl get pod nginx-configmap -o jsonpath='{.spec.containers[0].volumeMounts[0].mountPath}'",
+        "expectedValue": "/also/a/path"
+      },
+      {
+        "description": "Pod volume references namedanother-config",
+        "command": "kubectl get pod nginx-configmap -o jsonpath='{.spec.volumes[0].configMap.name}'",
+        "expectedValue": "namedanother-config"
+      },
+      {
+        "description": "Mounted key4 file contains value3",
+        "command": "kubectl exec nginx-configmap -- cat /also/a/path/key4",
+        "expectedValue": "value3"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete pod nginx-configmap --ignore-not-found",
+      "kubectl delete configmap namedanother-config --ignore-not-found"
+    ]
+  },
+  {
+    "number": 18,
+    "title": "Create a Pod with CPU and Memory Requests",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Design and Build",
+    "difficulty": "easy",
+    "timeMinutes": 5,
+    "scenario": "## Exercise 18\n\nYou need to create a pod with explicit resource requests so Kubernetes can schedule it onto a node with enough capacity.\n\nThe namespace **pod-resources** already exists.\n\nComplete the following tasks:\n\n1. Create a pod named **nginx-resources**\n2. Run it in the **pod-resources** namespace\n3. Use the image `nginx`\n4. Set resource requests on the container for:\n   - **CPU:** `200m`\n   - **Memory:** `1Gi`",
+    "hints": [
+      "Generate a starting manifest with `kubectl run nginx-resources --image=nginx --dry-run=client -o yaml > nginx-res.yaml`",
+      "Add `namespace: pod-resources` under `metadata`",
+      "Add `resources.requests.cpu` and `resources.requests.memory` under the container spec",
+      "Apply the manifest with `kubectl apply -f nginx-res.yaml`"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Generate the base manifest\n```bash\nkubectl run nginx-resources --image=nginx --dry-run=client -o yaml > nginx-res.yaml\n```\n\n### Step 2 — Edit the manifest\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  labels:\n    run: nginx-resources\n  name: nginx-resources\n  namespace: pod-resources\nspec:\n  containers:\n  - image: nginx\n    name: nginx-resources\n    resources:\n      requests:\n        memory: \"1Gi\"\n        cpu: \"200m\"\n```\n\n### Step 3 — Apply the pod\n```bash\nkubectl apply -f nginx-res.yaml\n```",
+    "validations": [
+      {
+        "description": "Namespace pod-resources exists",
+        "command": "kubectl get ns pod-resources -o jsonpath='{.metadata.name}'",
+        "expectedValue": "pod-resources"
+      },
+      {
+        "description": "Pod nginx-resources exists in pod-resources",
+        "command": "kubectl get pod nginx-resources -n pod-resources -o jsonpath='{.metadata.name}'",
+        "expectedValue": "nginx-resources"
+      },
+      {
+        "description": "Pod uses the nginx image",
+        "command": "kubectl get pod nginx-resources -n pod-resources -o jsonpath='{.spec.containers[0].image}'",
+        "expectedValue": "nginx"
+      },
+      {
+        "description": "Pod requests 200m CPU",
+        "command": "kubectl get pod nginx-resources -n pod-resources -o jsonpath='{.spec.containers[0].resources.requests.cpu}'",
+        "expectedValue": "200m"
+      },
+      {
+        "description": "Pod requests 1Gi memory",
+        "command": "kubectl get pod nginx-resources -n pod-resources -o jsonpath='{.spec.containers[0].resources.requests.memory}'",
+        "expectedValue": "1Gi"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete pod nginx-resources -n pod-resources --ignore-not-found"
+    ]
+  },
+  {
+    "number": 19,
+    "title": "Create a CronJob That Runs Every Minute",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Design and Build",
+    "difficulty": "medium",
+    "timeMinutes": 7,
+    "scenario": "## Exercise 19\n\nDevelopers occasionally need workloads that run periodically and complete once per schedule.\n\nComplete the following tasks:\n\n1. Create a YAML manifest at **/opt/KDPD00301/periodic.yaml**\n2. The manifest must define a **CronJob** named **hello**\n3. The CronJob must run a single **busybox** container also named **hello**\n4. The container must run the shell command `date`\n5. The CronJob must run **every minute**\n6. Each run must finish within **22 seconds** or Kubernetes should terminate it\n7. Create the resource and verify that it executes successfully at least once",
+    "hints": [
+      "Generate a starting manifest with `kubectl create cronjob hello --image=busybox --schedule='* * * * *' --dry-run=client -o yaml > /opt/KDPD00301/periodic.yaml`",
+      "Use `command: [\"sh\", \"-c\", \"date\"]` for the busybox container",
+      "Set `activeDeadlineSeconds: 22` under `spec.jobTemplate.spec`",
+      "After applying, wait a minute and inspect jobs with `kubectl get jobs` or check the CronJob status"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Generate the base manifest\n```bash\nkubectl create cronjob hello --image=busybox --schedule=\"* * * * *\" --dry-run=client -o yaml > /opt/KDPD00301/periodic.yaml\n```\n\n### Step 2 — Edit the manifest\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: hello\nspec:\n  schedule: \"* * * * *\"\n  successfulJobsHistoryLimit: 1\n  failedJobsHistoryLimit: 1\n  jobTemplate:\n    spec:\n      activeDeadlineSeconds: 22\n      template:\n        spec:\n          restartPolicy: Never\n          containers:\n          - name: hello\n            image: busybox\n            command: [\"sh\", \"-c\", \"date\"]\n```\n\n### Step 3 — Create the resource\n```bash\nkubectl apply -f /opt/KDPD00301/periodic.yaml\n```\n\n### Step 4 — Verify it ran successfully\n```bash\nkubectl get cronjob hello\nkubectl get jobs\n```",
+    "validations": [
+      {
+        "description": "CronJob hello exists",
+        "command": "kubectl get cronjob hello -o jsonpath='{.metadata.name}'",
+        "expectedValue": "hello"
+      },
+      {
+        "description": "CronJob runs every minute",
+        "command": "kubectl get cronjob hello -o jsonpath='{.spec.schedule}'",
+        "expectedValue": "* * * * *"
+      },
+      {
+        "description": "CronJob uses busybox",
+        "command": "kubectl get cronjob hello -o jsonpath='{.spec.jobTemplate.spec.template.spec.containers[0].image}'",
+        "expectedValue": "busybox"
+      },
+      {
+        "description": "CronJob container is named hello",
+        "command": "kubectl get cronjob hello -o jsonpath='{.spec.jobTemplate.spec.template.spec.containers[0].name}'",
+        "expectedValue": "hello"
+      },
+      {
+        "description": "CronJob runs the date command",
+        "command": "kubectl get cronjob hello -o jsonpath='{.spec.jobTemplate.spec.template.spec.containers[0].command}'",
+        "mustContain": "date"
+      },
+      {
+        "description": "CronJob activeDeadlineSeconds is 22",
+        "command": "kubectl get cronjob hello -o jsonpath='{.spec.jobTemplate.spec.activeDeadlineSeconds}'",
+        "expectedValue": "22"
+      },
+      {
+        "description": "CronJob has completed successfully at least once",
+        "command": "kubectl get jobs -o jsonpath='{range .items[?(@.metadata.ownerReferences[0].name==\"hello\")]}{.status.succeeded}{\" \"}{end}'",
+        "mustContain": "1"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete cronjob hello --ignore-not-found"
+    ]
+  },
+  {
+    "number": 20,
+    "title": "Configure Liveness and Readiness Probes",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Application Observability and Maintenance",
+    "difficulty": "medium",
+    "timeMinutes": 7,
+    "scenario": "## Exercise 20\n\nA pod is running on the cluster but it is not responding correctly.\n\nThe desired behavior is:\n\n1. Kubernetes should restart the pod when **/healthz** returns **HTTP 500**\n2. The service should stop sending traffic to the pod while it is unhealthy\n3. Both probes must use port **8080**\n\nComplete the following task:\n\n- Configure the existing pod **probe-pod** to use the **/healthz** endpoint for both liveness and readiness checks on port **8080**",
+    "hints": [
+      "Use `httpGet:` probes, not `exec:` probes",
+      "Both `livenessProbe` and `readinessProbe` should point to `path: /healthz` and `port: 8080`",
+      "A readiness probe keeps failing pods out of Service endpoints, while a liveness probe triggers restarts",
+      "If you need to recreate the pod, generate a manifest first, edit it, then apply it"
+    ],
+    "solution": "## Solution\n\n### Configure the pod probes\n```yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: probe-pod\nspec:\n  containers:\n  - name: probe-pod\n    image: nginx\n    livenessProbe:\n      httpGet:\n        path: /healthz\n        port: 8080\n    readinessProbe:\n      httpGet:\n        path: /healthz\n        port: 8080\n```\n\n### Apply the updated pod\n```bash\nkubectl apply -f probe-pod.yaml\n```\n\n### Verify the probes\n```bash\nkubectl get pod probe-pod -o yaml\n```\n\nThe liveness probe causes Kubernetes to restart the pod when `/healthz` returns HTTP 500, and the readiness probe prevents Services from routing traffic to the pod while it is failing.",
+    "validations": [
+      {
+        "description": "Pod probe-pod exists",
+        "command": "kubectl get pod probe-pod -o jsonpath='{.metadata.name}'",
+        "expectedValue": "probe-pod"
+      },
+      {
+        "description": "Pod has a liveness probe",
+        "command": "kubectl get pod probe-pod -o jsonpath='{.spec.containers[0].livenessProbe.httpGet.path}'",
+        "expectedValue": "/healthz"
+      },
+      {
+        "description": "Liveness probe uses port 8080",
+        "command": "kubectl get pod probe-pod -o jsonpath='{.spec.containers[0].livenessProbe.httpGet.port}'",
+        "expectedValue": "8080"
+      },
+      {
+        "description": "Pod has a readiness probe",
+        "command": "kubectl get pod probe-pod -o jsonpath='{.spec.containers[0].readinessProbe.httpGet.path}'",
+        "expectedValue": "/healthz"
+      },
+      {
+        "description": "Readiness probe uses port 8080",
+        "command": "kubectl get pod probe-pod -o jsonpath='{.spec.containers[0].readinessProbe.httpGet.port}'",
+        "expectedValue": "8080"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete pod probe-pod --ignore-not-found"
+    ]
+  },
+  {
+    "number": 21,
+    "title": "Restrict Pod Traffic with a NetworkPolicy",
+    "mode": "ckad",
+    "track": "kubernetes",
+    "domain": "Services and Networking",
+    "difficulty": "medium",
+    "timeMinutes": 8,
+    "scenario": "## Exercise 21\n\nYou have rolled out a new pod and now need to restrict its communication.\n\nThe pod **kdsn00201-newpod** should be allowed to send and receive traffic only to and from the **web** and **storage** pods.\n\nComplete the following task:\n\n1. Create a NetworkPolicy for the **newpod** workload\n2. Allow **Ingress** traffic only from pods labeled **app=web** or **app=storage**\n3. Allow **Egress** traffic only to pods labeled **app=web** or **app=storage**\n4. Deny all other traffic by omission",
+    "hints": [
+      "Use `policyTypes: [Ingress, Egress]` so both directions are restricted",
+      "Set `podSelector.matchLabels.app: newpod` to target the new pod workload",
+      "Use two `podSelector` entries in both the `ingress.from` and `egress.to` lists: one for `app=web`, one for `app=storage`",
+      "Apply the policy with `kubectl apply -f networkpolicy.yaml`"
+    ],
+    "solution": "## Solution\n\n```yaml\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-newpod-web-storage\nspec:\n  podSelector:\n    matchLabels:\n      app: newpod\n  policyTypes:\n  - Ingress\n  - Egress\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          app: web\n    - podSelector:\n        matchLabels:\n          app: storage\n  egress:\n  - to:\n    - podSelector:\n        matchLabels:\n          app: web\n    - podSelector:\n        matchLabels:\n          app: storage\n```\n\n```bash\nkubectl apply -f networkpolicy.yaml\n```",
+    "validations": [
+      {
+        "description": "NetworkPolicy allow-newpod-web-storage exists",
+        "command": "kubectl get networkpolicy allow-newpod-web-storage -o jsonpath='{.metadata.name}'",
+        "expectedValue": "allow-newpod-web-storage"
+      },
+      {
+        "description": "NetworkPolicy targets the newpod workload",
+        "command": "kubectl get networkpolicy allow-newpod-web-storage -o jsonpath='{.spec.podSelector.matchLabels.app}'",
+        "expectedValue": "newpod"
+      },
+      {
+        "description": "NetworkPolicy applies both Ingress and Egress policies",
+        "command": "kubectl get networkpolicy allow-newpod-web-storage -o jsonpath='{.spec.policyTypes}'",
+        "mustContain": "Ingress"
+      },
+      {
+        "description": "NetworkPolicy also includes Egress",
+        "command": "kubectl get networkpolicy allow-newpod-web-storage -o jsonpath='{.spec.policyTypes}'",
+        "mustContain": "Egress"
+      },
+      {
+        "description": "Ingress allows traffic from web pods",
+        "command": "kubectl get networkpolicy allow-newpod-web-storage -o jsonpath='{.spec.ingress}'",
+        "mustContain": "web"
+      },
+      {
+        "description": "Ingress allows traffic from storage pods",
+        "command": "kubectl get networkpolicy allow-newpod-web-storage -o jsonpath='{.spec.ingress}'",
+        "mustContain": "storage"
+      },
+      {
+        "description": "Egress allows traffic to web pods",
+        "command": "kubectl get networkpolicy allow-newpod-web-storage -o jsonpath='{.spec.egress}'",
+        "mustContain": "web"
+      },
+      {
+        "description": "Egress allows traffic to storage pods",
+        "command": "kubectl get networkpolicy allow-newpod-web-storage -o jsonpath='{.spec.egress}'",
+        "mustContain": "storage"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete networkpolicy allow-newpod-web-storage --ignore-not-found"
+    ]
+  }
+]

@@ -1,0 +1,513 @@
+[
+  {
+    "number": 22,
+    "title": "Create an Azure Resource Group",
+    "mode": "e2e",
+    "track": "azure",
+    "domain": "Infrastructure as Code",
+    "difficulty": "easy",
+    "timeMinutes": 5,
+    "scenario": "## Exercise 22\n\nCreate an Azure Resource Group using the `azlocal` CLI (miniblue Azure emulator).\n\n1. Create a resource group named **lab-rg** in location **eastus**\n2. Verify the resource group exists by showing **lab-rg**\n\nThe miniblue endpoint is available at `$MINIBLUE_ENDPOINT` (already set in your terminal).",
+    "hints": [
+      "Use `azlocal group create --name <name> --location <location>`",
+      "Use `azlocal group show --name <name>` to verify",
+      "miniblue accepts standard Azure CLI commands via the `azlocal` alias"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create the resource group\n```bash\nazlocal group create --name lab-rg --location eastus\n```\n\n### Step 2 — Verify\n```bash\nazlocal group show --name lab-rg\n```\n\nYou should see `lab-rg` in the output with location `eastus`.",
+    "validations": [
+      {
+        "description": "Resource group lab-rg exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/lab-rg?api-version=2021-04-01 | grep -o '\"name\":\"lab-rg\"'",
+        "runner": "shell",
+        "mustContain": "lab-rg"
+      }
+    ],
+    "cleanup": [
+      {
+        "command": "curl -fsS -X DELETE \"$MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/lab-rg?api-version=2021-04-01\" >/dev/null 2>&1 || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 23,
+    "title": "Provision Azure Blob Storage",
+    "mode": "e2e",
+    "track": "azure",
+    "domain": "Infrastructure as Code",
+    "difficulty": "easy",
+    "timeMinutes": 7,
+    "scenario": "## Exercise 23\n\nCreate an Azure Storage Account and a Blob Container using miniblue.\n\n1. Create a resource group named **storage-rg** in **eastus**\n2. Create a storage account named **labstorageacct** in that resource group\n3. Create a blob container named **data** in the storage account\n4. Upload a small text file to the container\n\nThe miniblue endpoint is available at `$MINIBLUE_ENDPOINT`.",
+    "hints": [
+      "Use `azlocal group create` for the resource group",
+      "Use `azlocal storage account create --name <name> --resource-group <rg> --location <loc>`",
+      "Use `azlocal storage container create --account <acct> --name <container>`",
+      "Use `azlocal storage blob upload --account <acct> --container <name> --name <file> --data <content>`"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create resource group\n```bash\nazlocal group create --name storage-rg --location eastus\n```\n\n### Step 2 — Create storage account\n```bash\nazlocal storage account create \\\n  --name labstorageacct \\\n  --resource-group storage-rg \\\n  --location eastus\n```\n\n### Step 3 — Create blob container\n```bash\nazlocal storage container create \\\n  --account labstorageacct \\\n  --name data\n```\n\n### Step 4 — Upload a file\n```bash\nazlocal storage blob upload \\\n  --account labstorageacct \\\n  --container data \\\n  --name hello.txt \\\n  --data \"Hello from LabForge!\"\n```",
+    "validations": [
+      {
+        "description": "Resource group storage-rg exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/storage-rg?api-version=2021-04-01 | grep -o '\"name\":\"storage-rg\"'",
+        "runner": "shell",
+        "mustContain": "storage-rg"
+      },
+      {
+        "description": "Storage account labstorageacct exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/storage-rg/providers/Microsoft.Storage/storageAccounts/labstorageacct?api-version=2021-04-01 | grep -o '\"name\":\"labstorageacct\"'",
+        "runner": "shell",
+        "mustContain": "labstorageacct"
+      }
+    ],
+    "cleanup": [
+      {
+        "command": "azlocal group delete --name storage-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 24,
+    "title": "Store a Secret in Azure Key Vault",
+    "mode": "e2e",
+    "track": "azure",
+    "domain": "Infrastructure as Code",
+    "difficulty": "medium",
+    "timeMinutes": 8,
+    "scenario": "## Exercise 24\n\nCreate an Azure Key Vault and store a secret in it using miniblue.\n\n1. Create a resource group named **vault-rg** in **eastus**\n2. Create a Key Vault named **lab-vault** in that resource group\n3. Store a secret with name **db-password** and value **S3cureP@ss!**\n4. Retrieve the secret to verify it was stored correctly\n\nThis simulates a real-world pattern of managing application secrets with Azure Key Vault.",
+    "hints": [
+      "Use `azlocal keyvault create --name <name> --resource-group <rg> --location <loc>`",
+      "Use `azlocal keyvault secret set --vault <vault> --name <secret-name> --value <value>`",
+      "Use `azlocal keyvault secret show --vault <vault> --name <secret-name>` to verify"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create resource group\n```bash\nazlocal group create --name vault-rg --location eastus\n```\n\n### Step 2 — Create Key Vault\n```bash\nazlocal keyvault create \\\n  --name lab-vault \\\n  --resource-group vault-rg \\\n  --location eastus\n```\n\n### Step 3 — Store the secret\n```bash\nazlocal keyvault secret set \\\n  --vault lab-vault \\\n  --name db-password \\\n  --value \"S3cureP@ss!\"\n```\n\n### Step 4 — Verify\n```bash\nazlocal keyvault secret show \\\n  --vault lab-vault \\\n  --name db-password\n```",
+    "validations": [
+      {
+        "description": "Key Vault lab-vault exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/vault-rg/providers/Microsoft.KeyVault/vaults/lab-vault?api-version=2021-04-01 | grep -o '\"name\":\"lab-vault\"'",
+        "runner": "shell",
+        "mustContain": "lab-vault"
+      },
+      {
+        "description": "Secret db-password is stored",
+        "command": "azlocal keyvault secret show --vault lab-vault --name db-password 2>/dev/null | grep -o 'db-password'",
+        "runner": "shell",
+        "mustContain": "db-password"
+      }
+    ],
+    "cleanup": [
+      {
+        "command": "azlocal group delete --name vault-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 25,
+    "title": "Combined: Azure Storage + K8s ConfigMap",
+    "mode": "e2e",
+    "track": "hybrid",
+    "domain": "Infrastructure as Code",
+    "difficulty": "medium",
+    "timeMinutes": 12,
+    "scenario": "## Exercise 25\n\nThis exercise bridges cloud infrastructure and Kubernetes. You will create Azure resources via miniblue, then reference them in a Kubernetes deployment.\n\n1. Create a resource group named **hybrid-rg** in **eastus**\n2. Create a storage account named **hybridstore** in that resource group\n3. Create a Kubernetes namespace named **hybrid-app**\n4. Create a ConfigMap named **storage-config** in the `hybrid-app` namespace with:\n   - Key `STORAGE_ACCOUNT` = `hybridstore`\n   - Key `STORAGE_ENDPOINT` = `$MINIBLUE_ENDPOINT`\n5. Deploy a pod named **config-reader** (image: `busybox:1.36`) that mounts the ConfigMap as environment variables and runs `sleep 3600`\n\nThis pattern is common in real-world deployments where K8s apps consume cloud-provisioned resources.",
+    "hints": [
+      "Create the Azure resources first with `azlocal`, then the K8s resources with `kubectl`",
+      "Use `kubectl create configmap storage-config --from-literal=KEY=VALUE -n hybrid-app`",
+      "For the pod, use `kubectl run config-reader --image=busybox:1.36 --restart=Never --command -- sleep 3600` then patch with `envFrom`",
+      "Alternatively, write a YAML manifest with `envFrom: [{configMapRef: {name: storage-config}}]`"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Create Azure resources\n```bash\nazlocal group create --name hybrid-rg --location eastus\nazlocal storage account create \\\n  --name hybridstore \\\n  --resource-group hybrid-rg \\\n  --location eastus\n```\n\n### Step 2 — Create Kubernetes namespace\n```bash\nkubectl create ns hybrid-app\n```\n\n### Step 3 — Create ConfigMap\n```bash\nkubectl create configmap storage-config \\\n  -n hybrid-app \\\n  --from-literal=STORAGE_ACCOUNT=hybridstore \\\n  --from-literal=STORAGE_ENDPOINT=$MINIBLUE_ENDPOINT\n```\n\n### Step 4 — Deploy the pod\n```yaml\n# config-reader.yaml\napiVersion: v1\nkind: Pod\nmetadata:\n  name: config-reader\n  namespace: hybrid-app\nspec:\n  containers:\n  - name: reader\n    image: busybox:1.36\n    command: [\"sleep\", \"3600\"]\n    envFrom:\n    - configMapRef:\n        name: storage-config\n```\n\n```bash\nkubectl apply -f config-reader.yaml\n```\n\n### Verify\n```bash\nkubectl exec config-reader -n hybrid-app -- env | grep STORAGE\n```",
+    "validations": [
+      {
+        "description": "Resource group hybrid-rg exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/hybrid-rg?api-version=2021-04-01 | grep -o '\"name\":\"hybrid-rg\"'",
+        "runner": "shell",
+        "mustContain": "hybrid-rg"
+      },
+      {
+        "description": "Storage account hybridstore exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/hybrid-rg/providers/Microsoft.Storage/storageAccounts/hybridstore?api-version=2021-04-01 | grep -o '\"name\":\"hybridstore\"'",
+        "runner": "shell",
+        "mustContain": "hybridstore"
+      },
+      {
+        "description": "Namespace hybrid-app exists",
+        "command": "kubectl get ns hybrid-app -o jsonpath='{.metadata.name}'",
+        "expectedValue": "hybrid-app"
+      },
+      {
+        "description": "ConfigMap storage-config has STORAGE_ACCOUNT key",
+        "command": "kubectl get configmap storage-config -n hybrid-app -o jsonpath='{.data.STORAGE_ACCOUNT}'",
+        "expectedValue": "hybridstore"
+      },
+      {
+        "description": "Pod config-reader is running",
+        "command": "kubectl get pod config-reader -n hybrid-app -o jsonpath='{.status.phase}'",
+        "expectedValue": "Running"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns hybrid-app --ignore-not-found",
+      {
+        "command": "azlocal group delete --name hybrid-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 26,
+    "title": "Full Stack: Azure Key Vault + K8s Secret + Deployment",
+    "mode": "e2e",
+    "track": "hybrid",
+    "domain": "Infrastructure as Code",
+    "difficulty": "hard",
+    "timeMinutes": 15,
+    "scenario": "## Exercise 26\n\nBuild a complete stack that stores credentials in Azure Key Vault (via miniblue), mirrors them to a Kubernetes Secret, and deploys an application that uses them.\n\n1. Create a resource group named **fullstack-rg** in **eastus**\n2. Create a Key Vault named **app-vault** and store two secrets:\n   - `db-host` = `postgres.internal.local`\n   - `db-password` = `SuperSecret42!`\n3. Create a Kubernetes namespace named **fullstack**\n4. Create a K8s Secret named **db-credentials** in the `fullstack` namespace with the same key-value pairs as the Key Vault secrets\n5. Create a Deployment named **webapp** with:\n   - **2 replicas**\n   - Image: `nginx:1.25`\n   - Mount the `db-credentials` secret as environment variables (`DB_HOST`, `DB_PASSWORD`)\n\nThis exercise simulates the real-world pattern of secrets flowing from a cloud vault into Kubernetes workloads.",
+    "hints": [
+      "Create Azure resources first, then K8s resources",
+      "Use `kubectl create secret generic db-credentials --from-literal=DB_HOST=... --from-literal=DB_PASSWORD=...`",
+      "For the deployment, use `envFrom: [{secretRef: {name: db-credentials}}]` in the container spec",
+      "Write a YAML manifest for the Deployment to include the secretRef — `kubectl create deploy` doesn't support envFrom directly"
+    ],
+    "solution": "## Solution\n\n### Step 1 — Azure resources\n```bash\nazlocal group create --name fullstack-rg --location eastus\nazlocal keyvault create --name app-vault --resource-group fullstack-rg --location eastus\nazlocal keyvault secret set --vault app-vault --name db-host --value \"postgres.internal.local\"\nazlocal keyvault secret set --vault app-vault --name db-password --value \"SuperSecret42!\"\n```\n\n### Step 2 — Kubernetes namespace and secret\n```bash\nkubectl create ns fullstack\nkubectl create secret generic db-credentials \\\n  -n fullstack \\\n  --from-literal=DB_HOST=postgres.internal.local \\\n  --from-literal=DB_PASSWORD=\"SuperSecret42!\"\n```\n\n### Step 3 — Deploy the application\n```yaml\n# webapp.yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: webapp\n  namespace: fullstack\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: webapp\n  template:\n    metadata:\n      labels:\n        app: webapp\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.25\n        envFrom:\n        - secretRef:\n            name: db-credentials\n```\n\n```bash\nkubectl apply -f webapp.yaml\n```\n\n### Verify\n```bash\nkubectl get deploy webapp -n fullstack\nkubectl exec deploy/webapp -n fullstack -- env | grep DB_\n```",
+    "validations": [
+      {
+        "description": "Key Vault app-vault exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/fullstack-rg/providers/Microsoft.KeyVault/vaults/app-vault?api-version=2021-04-01 | grep -o '\"name\":\"app-vault\"'",
+        "runner": "shell",
+        "mustContain": "app-vault"
+      },
+      {
+        "description": "Secret db-host is stored in Key Vault",
+        "command": "azlocal keyvault secret show --vault app-vault --name db-host 2>/dev/null | grep -o 'db-host'",
+        "runner": "shell",
+        "mustContain": "db-host"
+      },
+      {
+        "description": "Namespace fullstack exists",
+        "command": "kubectl get ns fullstack -o jsonpath='{.metadata.name}'",
+        "expectedValue": "fullstack"
+      },
+      {
+        "description": "K8s Secret db-credentials exists",
+        "command": "kubectl get secret db-credentials -n fullstack -o jsonpath='{.metadata.name}'",
+        "expectedValue": "db-credentials"
+      },
+      {
+        "description": "Deployment webapp has 2 replicas",
+        "command": "kubectl get deploy webapp -n fullstack -o jsonpath='{.spec.replicas}'",
+        "expectedValue": "2"
+      },
+      {
+        "description": "Deployment uses nginx:1.25 image",
+        "command": "kubectl get deploy webapp -n fullstack -o jsonpath='{.spec.template.spec.containers[0].image}'",
+        "expectedValue": "nginx:1.25"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns fullstack --ignore-not-found",
+      {
+        "command": "azlocal group delete --name fullstack-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 27,
+    "title": "Create and List Multiple Resource Groups",
+    "mode": "e2e",
+    "track": "azure",
+    "domain": "Infrastructure as Code",
+    "difficulty": "easy",
+    "timeMinutes": 6,
+    "scenario": "## Exercise 27\n\nCreate two Azure Resource Groups using `azlocal`, then verify they both appear in the list output.\n\n1. Create **alpha-rg** in **eastus**\n2. Create **beta-rg** in **westeurope**\n3. List resource groups and confirm both names appear\n\nThis exercise is meant to build confidence with repeated Azure resource creation and verification.",
+    "hints": [
+      "Use `azlocal group create` twice, once for each resource group",
+      "Use `azlocal group list` to confirm both groups exist"
+    ],
+    "solution": "## Solution\n\n```bash\nazlocal group create --name alpha-rg --location eastus\nazlocal group create --name beta-rg --location westeurope\nazlocal group list\n```",
+    "validations": [
+      {
+        "description": "Resource group alpha-rg exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/alpha-rg?api-version=2021-04-01 | grep -o '\"name\":\"alpha-rg\"'",
+        "runner": "shell",
+        "mustContain": "alpha-rg"
+      },
+      {
+        "description": "Resource group beta-rg exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/beta-rg?api-version=2021-04-01 | grep -o '\"name\":\"beta-rg\"'",
+        "runner": "shell",
+        "mustContain": "beta-rg"
+      }
+    ],
+    "cleanup": [
+      {
+        "command": "azlocal group delete --name alpha-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      },
+      {
+        "command": "azlocal group delete --name beta-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 28,
+    "title": "Create a Kubernetes Namespace and ConfigMap",
+    "mode": "e2e",
+    "track": "hybrid",
+    "domain": "Infrastructure as Code",
+    "difficulty": "easy",
+    "timeMinutes": 7,
+    "scenario": "## Exercise 28\n\nSet up a simple Kubernetes namespace and ConfigMap for an application that will later consume Azure settings.\n\n1. Create a namespace named **app-sandbox**\n2. Create a ConfigMap named **app-settings** in that namespace\n3. Add two keys to the ConfigMap:\n   - `REGION` = `eastus`\n   - `ENVIRONMENT` = `dev`\n\nThis is a small bridge exercise between cluster configuration and the cloud-oriented track.",
+    "hints": [
+      "Use `kubectl create ns app-sandbox`",
+      "Use `kubectl create configmap ... --from-literal=KEY=VALUE -n app-sandbox`"
+    ],
+    "solution": "## Solution\n\n```bash\nkubectl create ns app-sandbox\nkubectl create configmap app-settings \\\n  -n app-sandbox \\\n  --from-literal=REGION=eastus \\\n  --from-literal=ENVIRONMENT=dev\n```",
+    "validations": [
+      {
+        "description": "Namespace app-sandbox exists",
+        "command": "kubectl get ns app-sandbox -o jsonpath='{.metadata.name}'",
+        "expectedValue": "app-sandbox"
+      },
+      {
+        "description": "ConfigMap app-settings has REGION",
+        "command": "kubectl get configmap app-settings -n app-sandbox -o jsonpath='{.data.REGION}'",
+        "expectedValue": "eastus"
+      },
+      {
+        "description": "ConfigMap app-settings has ENVIRONMENT",
+        "command": "kubectl get configmap app-settings -n app-sandbox -o jsonpath='{.data.ENVIRONMENT}'",
+        "expectedValue": "dev"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns app-sandbox --ignore-not-found"
+    ]
+  },
+  {
+    "number": 29,
+    "title": "Create a Storage Account for Reports",
+    "mode": "e2e",
+    "track": "azure",
+    "domain": "Infrastructure as Code",
+    "difficulty": "easy",
+    "timeMinutes": 7,
+    "scenario": "## Exercise 29\n\nProvision the base Azure resources for a reporting workflow.\n\n1. Create a resource group named **reports-rg** in **eastus**\n2. Create a storage account named **reportstore01** in that resource group\n3. Show the storage account to confirm it exists\n\nThis is the minimal cloud setup for later reporting and batch-processing scenarios.",
+    "hints": [
+      "Create the resource group first",
+      "Use `azlocal storage account create --name ... --resource-group ... --location ...`",
+      "Use `azlocal storage account show` to verify"
+    ],
+    "solution": "## Solution\n\n```bash\nazlocal group create --name reports-rg --location eastus\nazlocal storage account create --name reportstore01 --resource-group reports-rg --location eastus\nazlocal storage account show --name reportstore01 --resource-group reports-rg\n```",
+    "validations": [
+      {
+        "description": "Resource group reports-rg exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/reports-rg?api-version=2021-04-01 | grep -o '\"name\":\"reports-rg\"'",
+        "runner": "shell",
+        "mustContain": "reports-rg"
+      },
+      {
+        "description": "Storage account reportstore01 exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/reports-rg/providers/Microsoft.Storage/storageAccounts/reportstore01?api-version=2021-04-01 | grep -o '\"name\":\"reportstore01\"'",
+        "runner": "shell",
+        "mustContain": "reportstore01"
+      }
+    ],
+    "cleanup": [
+      {
+        "command": "azlocal group delete --name reports-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 30,
+    "title": "Create a Key Vault and Store an API Token",
+    "mode": "e2e",
+    "track": "azure",
+    "domain": "Infrastructure as Code",
+    "difficulty": "medium",
+    "timeMinutes": 9,
+    "scenario": "## Exercise 30\n\nProvision a Key Vault and store one application credential inside it.\n\n1. Create a resource group named **secrets-rg** in **eastus**\n2. Create a Key Vault named **ops-vault** in that resource group\n3. Store a secret named **api-token** with value **blueaccademy-token**\n4. Retrieve the secret to verify it was stored\n\nThis models the first step of moving credentials out of application code.",
+    "hints": [
+      "Use `azlocal keyvault create` for the vault",
+      "Use `azlocal keyvault secret set` and `show` for the credential"
+    ],
+    "solution": "## Solution\n\n```bash\nazlocal group create --name secrets-rg --location eastus\nazlocal keyvault create --name ops-vault --resource-group secrets-rg --location eastus\nazlocal keyvault secret set --vault ops-vault --name api-token --value blueaccademy-token\nazlocal keyvault secret show --vault ops-vault --name api-token\n```",
+    "validations": [
+      {
+        "description": "Key Vault ops-vault exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/secrets-rg/providers/Microsoft.KeyVault/vaults/ops-vault?api-version=2021-04-01 | grep -o '\"name\":\"ops-vault\"'",
+        "runner": "shell",
+        "mustContain": "ops-vault"
+      },
+      {
+        "description": "Secret api-token is stored",
+        "command": "azlocal keyvault secret show --vault ops-vault --name api-token 2>/dev/null | grep -o 'api-token'",
+        "runner": "shell",
+        "mustContain": "api-token"
+      }
+    ],
+    "cleanup": [
+      {
+        "command": "azlocal group delete --name secrets-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 31,
+    "title": "Inject Storage Settings into a Deployment",
+    "mode": "e2e",
+    "track": "hybrid",
+    "domain": "Infrastructure as Code",
+    "difficulty": "medium",
+    "timeMinutes": 12,
+    "scenario": "## Exercise 31\n\nProvision a storage account, then make those settings available to a Kubernetes deployment.\n\n1. Create a resource group named **app-rg** in **eastus**\n2. Create a storage account named **appstoredemo** in that resource group\n3. Create a namespace named **app-runtime**\n4. Create a ConfigMap named **storage-settings** in **app-runtime** with:\n   - `STORAGE_ACCOUNT` = `appstoredemo`\n   - `STORAGE_ENDPOINT` = `$MINIBLUE_ENDPOINT`\n5. Create a Deployment named **settings-reader** with:\n   - 1 replica\n   - image `busybox:1.36`\n   - command `sleep 3600`\n   - environment variables loaded from the ConfigMap\n\nThis is the pattern of turning provisioned cloud data into runtime app configuration.",
+    "hints": [
+      "Use `kubectl create configmap` with `--from-literal`",
+      "Write a Deployment manifest with `envFrom` and apply it"
+    ],
+    "solution": "## Solution\n\n```bash\nazlocal group create --name app-rg --location eastus\nazlocal storage account create --name appstoredemo --resource-group app-rg --location eastus\nkubectl create ns app-runtime\nkubectl create configmap storage-settings \\\n  -n app-runtime \\\n  --from-literal=STORAGE_ACCOUNT=appstoredemo \\\n  --from-literal=STORAGE_ENDPOINT=$MINIBLUE_ENDPOINT\n```\n\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: settings-reader\n  namespace: app-runtime\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: settings-reader\n  template:\n    metadata:\n      labels:\n        app: settings-reader\n    spec:\n      containers:\n      - name: reader\n        image: busybox:1.36\n        command: [\"sleep\", \"3600\"]\n        envFrom:\n        - configMapRef:\n            name: storage-settings\n```",
+    "validations": [
+      {
+        "description": "Storage account appstoredemo exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/app-rg/providers/Microsoft.Storage/storageAccounts/appstoredemo?api-version=2021-04-01 | grep -o '\"name\":\"appstoredemo\"'",
+        "runner": "shell",
+        "mustContain": "appstoredemo"
+      },
+      {
+        "description": "Namespace app-runtime exists",
+        "command": "kubectl get ns app-runtime -o jsonpath='{.metadata.name}'",
+        "expectedValue": "app-runtime"
+      },
+      {
+        "description": "ConfigMap storage-settings has STORAGE_ACCOUNT",
+        "command": "kubectl get configmap storage-settings -n app-runtime -o jsonpath='{.data.STORAGE_ACCOUNT}'",
+        "expectedValue": "appstoredemo"
+      },
+      {
+        "description": "Deployment settings-reader has one replica",
+        "command": "kubectl get deploy settings-reader -n app-runtime -o jsonpath='{.spec.replicas}'",
+        "expectedValue": "1"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns app-runtime --ignore-not-found",
+      {
+        "command": "azlocal group delete --name app-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 32,
+    "title": "Mirror a Vault Secret into Kubernetes",
+    "mode": "e2e",
+    "track": "hybrid",
+    "domain": "Infrastructure as Code",
+    "difficulty": "medium",
+    "timeMinutes": 12,
+    "scenario": "## Exercise 32\n\nCreate a Key Vault secret, then mirror it into Kubernetes for a simple workload.\n\n1. Create a resource group named **vault-sync-rg** in **eastus**\n2. Create a Key Vault named **sync-vault**\n3. Store a secret named **db-password** with value **sync-secret-42**\n4. Create a namespace named **sync-app**\n5. Create a Kubernetes Secret named **db-secret** in **sync-app** with:\n   - `DB_PASSWORD` = `sync-secret-42`\n6. Create a pod named **secret-reader** using `busybox:1.36` that runs `sleep 3600`\n\nThis is a simplified version of secret synchronization across cloud and cluster boundaries.",
+    "hints": [
+      "Use `kubectl create secret generic` for the Kubernetes side",
+      "Use `kubectl run ... --restart=Never --command -- sleep 3600` for the pod"
+    ],
+    "solution": "## Solution\n\n```bash\nazlocal group create --name vault-sync-rg --location eastus\nazlocal keyvault create --name sync-vault --resource-group vault-sync-rg --location eastus\nazlocal keyvault secret set --vault sync-vault --name db-password --value sync-secret-42\nkubectl create ns sync-app\nkubectl create secret generic db-secret -n sync-app --from-literal=DB_PASSWORD=sync-secret-42\nkubectl run secret-reader -n sync-app --image=busybox:1.36 --restart=Never --command -- sleep 3600\n```",
+    "validations": [
+      {
+        "description": "Key Vault sync-vault exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/vault-sync-rg/providers/Microsoft.KeyVault/vaults/sync-vault?api-version=2021-04-01 | grep -o '\"name\":\"sync-vault\"'",
+        "runner": "shell",
+        "mustContain": "sync-vault"
+      },
+      {
+        "description": "Secret db-password is stored in Key Vault",
+        "command": "azlocal keyvault secret show --vault sync-vault --name db-password 2>/dev/null | grep -o 'db-password'",
+        "runner": "shell",
+        "mustContain": "db-password"
+      },
+      {
+        "description": "Kubernetes Secret db-secret exists",
+        "command": "kubectl get secret db-secret -n sync-app -o jsonpath='{.metadata.name}'",
+        "expectedValue": "db-secret"
+      },
+      {
+        "description": "Pod secret-reader is running",
+        "command": "kubectl get pod secret-reader -n sync-app -o jsonpath='{.status.phase}'",
+        "expectedValue": "Running"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns sync-app --ignore-not-found",
+      {
+        "command": "azlocal group delete --name vault-sync-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  },
+  {
+    "number": 33,
+    "title": "Scheduled Batch Sync with Azure Metadata",
+    "mode": "e2e",
+    "track": "hybrid",
+    "domain": "Infrastructure as Code",
+    "difficulty": "hard",
+    "timeMinutes": 16,
+    "scenario": "## Exercise 33\n\nBuild a small scheduled batch workload that combines Azure resource metadata with Kubernetes runtime configuration.\n\n1. Create a resource group named **batch-rg** in **eastus**\n2. Create a storage account named **batchstore** in that resource group\n3. Create a namespace named **batch-jobs**\n4. Create a ConfigMap named **batch-config** in **batch-jobs** with:\n   - `STORAGE_ACCOUNT` = `batchstore`\n   - `STORAGE_ENDPOINT` = `$MINIBLUE_ENDPOINT`\n5. Create a Secret named **batch-creds** in **batch-jobs** with:\n   - `API_TOKEN` = `batch-token-01`\n6. Create a CronJob named **report-sync** in **batch-jobs** with:\n   - schedule `*/15 * * * *`\n   - image `busybox:1.36`\n   - command that prints a message and sleeps briefly\n   - environment loaded from both the ConfigMap and the Secret\n\nThis models a realistic batch workload that needs both cloud metadata and operational credentials.",
+    "hints": [
+      "Create the Azure and Kubernetes inputs first, then define the CronJob",
+      "Use both `configMapRef` and `secretRef` under `envFrom`",
+      "Validate the schedule and image after applying the manifest"
+    ],
+    "solution": "## Solution\n\n```bash\nazlocal group create --name batch-rg --location eastus\nazlocal storage account create --name batchstore --resource-group batch-rg --location eastus\nkubectl create ns batch-jobs\nkubectl create configmap batch-config -n batch-jobs \\\n  --from-literal=STORAGE_ACCOUNT=batchstore \\\n  --from-literal=STORAGE_ENDPOINT=$MINIBLUE_ENDPOINT\nkubectl create secret generic batch-creds -n batch-jobs \\\n  --from-literal=API_TOKEN=batch-token-01\n```\n\n```yaml\napiVersion: batch/v1\nkind: CronJob\nmetadata:\n  name: report-sync\n  namespace: batch-jobs\nspec:\n  schedule: \"*/15 * * * *\"\n  jobTemplate:\n    spec:\n      template:\n        spec:\n          restartPolicy: OnFailure\n          containers:\n          - name: sync\n            image: busybox:1.36\n            command: [\"sh\", \"-c\", \"echo syncing reports && sleep 5\"]\n            envFrom:\n            - configMapRef:\n                name: batch-config\n            - secretRef:\n                name: batch-creds\n```",
+    "validations": [
+      {
+        "description": "Storage account batchstore exists",
+        "command": "curl -sf $MINIBLUE_ENDPOINT/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/batch-rg/providers/Microsoft.Storage/storageAccounts/batchstore?api-version=2021-04-01 | grep -o '\"name\":\"batchstore\"'",
+        "runner": "shell",
+        "mustContain": "batchstore"
+      },
+      {
+        "description": "Namespace batch-jobs exists",
+        "command": "kubectl get ns batch-jobs -o jsonpath='{.metadata.name}'",
+        "expectedValue": "batch-jobs"
+      },
+      {
+        "description": "ConfigMap batch-config has STORAGE_ACCOUNT",
+        "command": "kubectl get configmap batch-config -n batch-jobs -o jsonpath='{.data.STORAGE_ACCOUNT}'",
+        "expectedValue": "batchstore"
+      },
+      {
+        "description": "Secret batch-creds exists",
+        "command": "kubectl get secret batch-creds -n batch-jobs -o jsonpath='{.metadata.name}'",
+        "expectedValue": "batch-creds"
+      },
+      {
+        "description": "CronJob report-sync exists",
+        "command": "kubectl get cronjob report-sync -n batch-jobs -o jsonpath='{.metadata.name}'",
+        "expectedValue": "report-sync"
+      },
+      {
+        "description": "CronJob report-sync uses the expected schedule",
+        "command": "kubectl get cronjob report-sync -n batch-jobs -o jsonpath='{.spec.schedule}'",
+        "expectedValue": "*/15 * * * *"
+      },
+      {
+        "description": "CronJob report-sync uses busybox:1.36",
+        "command": "kubectl get cronjob report-sync -n batch-jobs -o jsonpath='{.spec.jobTemplate.spec.template.spec.containers[0].image}'",
+        "expectedValue": "busybox:1.36"
+      }
+    ],
+    "cleanup": [
+      "kubectl delete ns batch-jobs --ignore-not-found",
+      {
+        "command": "azlocal group delete --name batch-rg --yes 2>/dev/null || true",
+        "runner": "shell"
+      }
+    ]
+  }
+]

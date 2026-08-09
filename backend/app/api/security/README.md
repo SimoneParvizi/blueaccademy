@@ -1,0 +1,2 @@
+- Add authentication
+- maybe osmehting else? BE SURE

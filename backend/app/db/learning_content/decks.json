@@ -1,0 +1,56 @@
+{
+  "k8s_basics": {
+      "title": "K8s Core Concepts",
+      "description": "Pods, Deployments, ReplicaSets, DaemonSets, Jobs, CronJobs, and workload fundamentals.",
+      "track": "kubernetes",
+      "card_count": 0
+  },
+  "k8s_networking": {
+      "title": "K8s Networking & Services",
+      "description": "ClusterIP, NodePort, Ingress, NetworkPolicy, DNS, CNI, headless services.",
+      "track": "kubernetes",
+      "card_count": 0
+  },
+  "k8s_storage": {
+      "title": "K8s Config, Storage & Security",
+      "description": "ConfigMaps, Secrets, PVs, PVCs, StorageClasses, RBAC, ServiceAccounts, PSS.",
+      "track": "kubernetes",
+      "card_count": 0
+  },
+  "k8s_ops": {
+      "title": "K8s Operations & Debugging",
+      "description": "HPA, VPA, scheduling, troubleshooting, CRDs, operators, Helm, cluster internals.",
+      "track": "kubernetes",
+      "card_count": 0
+  },
+  "docker_build": {
+      "title": "Docker Images & Builds",
+      "description": "Dockerfile instructions, multi-stage builds, layer caching, BuildKit, base images.",
+      "track": "docker",
+      "card_count": 0
+  },
+  "docker_runtime": {
+      "title": "Docker Runtime & Compose",
+      "description": "Containers, volumes, networks, docker compose, health checks, resource limits.",
+      "track": "docker",
+      "card_count": 0
+  },
+  "docker_security": {
+      "title": "Docker Security & Registry",
+      "description": "Rootless, capabilities, scanning, signing, registries, tagging strategies.",
+      "track": "docker",
+      "card_count": 0
+  },
+  "pulumi_core": {
+      "title": "Pulumi Core Concepts",
+      "description": "Projects, stacks, resources, inputs/outputs, config, secrets, providers.",
+      "track": "pulumi",
+      "card_count": 0
+  },
+  "pulumi_advanced": {
+      "title": "Pulumi Patterns & Operations",
+      "description": "Component resources, automation API, testing, CrossGuard, stack references, ESC.",
+      "track": "pulumi",
+      "card_count": 0
+  }
+}

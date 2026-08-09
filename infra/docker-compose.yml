@@ -1,0 +1,47 @@
+services:
+  postgres-db:
+    image: postgres:18@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a #v18.0.0
+    shm_size: 500mb # max memory for the container
+    environment:
+      POSTGRES_DB: blueaccademy
+      POSTGRES_USER: blueaccademy
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+    volumes: # This volume gets created if not existing
+      - ~/postgres/blueaccademy:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  backend-api:
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://blueaccademy:mypassword@host.docker.internal:5432/blueaccademy
+    ports:
+      - "8000:8000"
+    post_start:
+      - command: uv run python -m backend.app.db.seed
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+  frontend:
+    depends_on:
+      backend-api:
+        condition: service_healthy
+    build:
+      context: ..
+      dockerfile: infra/frontend.Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_PYTHON_API_BASE_URL: http://localhost:8000

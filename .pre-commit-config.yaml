@@ -1,0 +1,39 @@
+fail_fast: false
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: no-commit-to-branch
+        args: [--branch, main]
+  - repo: local
+    hooks:
+      - id: ty
+        name: check type hints
+        language: system
+        entry: uv run ty check
+        types: [python]
+  - repo: local
+    hooks:
+      - id: linting ruff
+        name: run linting via ruff
+        language: system
+        entry: uv run ruff check
+        args:
+          - --fix
+        types: [python]
+  - repo: local
+    hooks:
+      - id: formatting
+        name: run code formatting via ruff
+        language: system
+        entry: uv run ruff format
+        types: [python]
+  - repo: local
+    hooks:
+      - id: tests
+        name: Run unit tests
+        language: system
+        entry: uv run pytest
+        pass_filenames: false
