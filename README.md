@@ -1,13 +1,13 @@
-<div style="text-align: center;">
+<p align="center">
   <img alt="blueaccademy logo" src="frontend/imgs/namelogo.png" width="560" />
-</div>
+</p>
 
-<div style="text-align: center;">
+<p align="center">
   <img src="https://img.shields.io/badge/Status-Early%20Access-2563eb" alt="Status: Early Access">
   <img src="https://img.shields.io/badge/License-Apache%202.0-2563eb" alt="License: Apache 2.0">
-</div>
+</p>
 
-<div style="text-align: center;">
+<div align="center">
   <h2>The most complete platform for mastering cloud and DevOps workflows</h2>
   blueaccademy is an open source learning platform for Kubernetes, Docker, Pulumi,<br />
   GitHub Actions, and adjacent infrastructure workflows.<br /><br />
@@ -16,19 +16,19 @@
   and broader real-environment exercises.
 </div>
 
-<div style="text-align: center;">
+<p align="center">
   <br />
   <img alt="Kubernetes" src="https://cdn.simpleicons.org/kubernetes/326CE5" width="32">
   <img alt="Docker" src="https://cdn.simpleicons.org/docker/2496ED" width="32">
   <img alt="Pulumi" src="https://cdn.simpleicons.org/pulumi/8A3391" width="32">
   <img alt="GitHub Actions" src="https://cdn.simpleicons.org/githubactions/2088FF" width="32">
   <img alt="Python" src="https://cdn.simpleicons.org/python/3776AB" width="32">
-</div>
+</p>
 
-<div style="text-align: center;">
+<p align="center">
   <br />
-  <a href="#run it locally"><strong>Run it now locally</strong></a>
-</div>
+  <a href="#run-it-locally"><strong>Run it now locally</strong></a>
+</p>
 
 <br /><br />
 
