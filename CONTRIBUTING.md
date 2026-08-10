@@ -9,7 +9,7 @@ multiple projects already, your time and attention are appreciated.
 Read these first:
 
 - [README.md](README.md) for the current product scope and local runtime
-- The public docs site for deeper documentation as it expands
+- [The full docs](https://docs.blueaccademy.com) for deeper documentation as it expands
 
 This repository is still in an active transition from an earlier prototype to a
 more maintainable Python/FastAPI architecture. That matters because not every
@@ -38,8 +38,8 @@ If you are unsure whether a change is a good fit, open an issue first.
 Detailed project documentation is being maintained separately from this code
 repository.
 
-- Public docs: `https://docks.blueaccademy.com/`
-- Documentation index: `https://docks.blueaccademy.com/llms.txt`
+- Public docs: `https://docs.blueaccademy.com/`
+- Documentation index: `https://docs.blueaccademy.com/llms.txt`
 - Docs repository: `https://github.com/SimoneParvizi/blueaccademy-docs`
 
 Use this repository for contribution workflow and repo-specific expectations.

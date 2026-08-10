@@ -28,6 +28,8 @@
 <p align="center">
   <br />
   <a href="#run-it-locally"><strong>Run it now locally</strong></a>
+  ·
+  <a href="https://docs.blueaccademy.com"><strong>Read the full docs</strong></a>
 </p>
 
 <br /><br />
