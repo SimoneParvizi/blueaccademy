@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 project_root = Path(__file__).resolve().parents[2]
 frontend_build_dir = project_root / "dist" / "public"
-landing_dir = project_root / "frontend" / "landing"
 
 
 @asynccontextmanager
@@ -92,9 +91,6 @@ if settings.enable_more:
     app.include_router(terminal_router, prefix="/api/v1")
     app.include_router(ws_router)
 
-if Path(landing_dir).exists():
-    app.mount("/landing", StaticFiles(directory=landing_dir, html=True), name="landing")
-
 if Path(frontend_build_dir / "assets").exists():
     app.mount(
         "/assets",
@@ -118,7 +114,7 @@ async def catch_all(full_path: str = "") -> FileResponse | PlainTextResponse:
     #   - explain main.py top to bottom without reading comments
     #   - explain why catch_all() exists
     #   - explain the difference between /, /{full_path:path}, app.mount(...), and include_router(...)
-    if full_path.startswith(("api/", "ws/", "docs", "redoc", "openapi.json", "landing")):
+    if full_path.startswith(("api/", "ws/", "docs", "redoc", "openapi.json")):
         return PlainTextResponse("Not Found", status_code=404)
 
     if not frontend_build_dir.exists():
