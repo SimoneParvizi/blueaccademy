@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Early%20Access-2563eb" alt="Status: Early Access">
-  <img src="https://img.shields.io/badge/License-Apache%202.0-2563eb" alt="License: Apache 2.0">
+  <img src="https://img.shields.io/badge/License-AGPLv3-2563eb" alt="License: GNU AGPL v3">
 </p>
 
 <div align="center">
@@ -106,4 +106,4 @@ Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating in th
 
 ## License
 
-This repository's source code is available under the [Apache License 2.0](LICENSE).
+This repository's source code is available under the [GNU Affero General Public License v3.0](LICENSE).

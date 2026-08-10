@@ -49,7 +49,10 @@ app = FastAPI(
     version="0.1.0",
     openapi_url="/openapi.json",
     lifespan=setup_and_cleanup,
-    # TODO: add license_info=""
+    license_info={
+        "name": "GNU Affero General Public License v3.0 or later",
+        "url": "https://www.gnu.org/licenses/agpl-3.0.html",
+    },
 )
 
 app.add_middleware(
