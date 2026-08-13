@@ -15,6 +15,7 @@ export async function apiRequest(
 ): Promise<Response> {
   const res = await fetch(resolveApiUrl(url), {
     method,
+    cache: "no-store",
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
   });
@@ -30,7 +31,9 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const path = queryKey.join("/");
-    const res = await fetch(resolveApiUrl(path));
+    const res = await fetch(resolveApiUrl(path), {
+      cache: "no-store",
+    });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
