@@ -175,6 +175,8 @@ export default function Dashboard() {
     queries: (decks ?? []).map((deck) => ({
       queryKey: ["/api/decks", deck.id, "stats"],
       queryFn: () => apiRequest("GET", `/api/decks/${deck.id}/stats`).then((r) => r.json() as Promise<DeckStats>),
+      staleTime: 0,
+      refetchOnMount: "always" as const,
     })),
   });
 

@@ -99,7 +99,7 @@ if Path(frontend_build_dir / "assets").exists():
     )
 
 
-# TODO: get a favicon
+# TODO: point to favicon
 @app.get("/favicon.png", include_in_schema=False, response_model=None)
 async def favicon() -> FileResponse | PlainTextResponse:
     candidate = frontend_build_dir / "favicon.png"
@@ -111,9 +111,6 @@ async def favicon() -> FileResponse | PlainTextResponse:
 @app.get("/", include_in_schema=False, response_model=None)
 @app.get("/{full_path:path}", include_in_schema=False, response_model=None)
 async def catch_all(full_path: str = "") -> FileResponse | PlainTextResponse:
-    #   - explain main.py top to bottom without reading comments
-    #   - explain why catch_all() exists
-    #   - explain the difference between /, /{full_path:path}, app.mount(...), and include_router(...)
     if full_path.startswith(("api/", "ws/", "docs", "redoc", "openapi.json")):
         return PlainTextResponse("Not Found", status_code=404)
 

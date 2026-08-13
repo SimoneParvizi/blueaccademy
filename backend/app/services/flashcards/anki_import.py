@@ -50,7 +50,6 @@ def normalize_tags(raw_tags: str) -> str:
     return json.dumps(tags)
 
 
-# TODO: do unit test for this
 def import_anki_cards(db: Session, payload: AnkiImportRequest) -> AnkiImportResponse:
     imported_ids = []
     errors = []

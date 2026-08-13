@@ -12,7 +12,7 @@ from backend.app.services.exceptions import DeckNotFoundError
 from backend.app.services.flashcards.card_manager import CardManager, to_dict
 from backend.app.services.flashcards.card_settings import get_flashcards_settings
 from backend.app.services.flashcards.types import Queue
-from backend.app.services.utils import datetime_start_of_day_ms, now_ms
+from backend.app.services.utils import now_ms
 
 logger = logging.getLogger(__name__)
 
@@ -143,23 +143,31 @@ class DeckManager:
             logger.info(f"No cards in deck {deck_id}. Setting up default deck stats")
             return DeckStats()  # defaults are all 0
 
-        due_progress = get_due_progress_for_deck(self.db, deck_id)
         cards_with_progress = get_deck_progress(self.db, deck_id)
+        all_cards = self.list_flashcards(deck_id)
+        card_manager = CardManager(self.db)
 
-        start_of_day = datetime_start_of_day_ms()
         introduced_today_count = 0
-        for card in cards_with_progress:
-            timestamp_exists = card.first_reviewed_at is not None
-            was_introduced_today = card.first_reviewed_at >= start_of_day if timestamp_exists else False
-            if timestamp_exists and was_introduced_today:
-                introduced_today_count = introduced_today_count + 1
+        due_progress_learn = 0
+        due_progress_review = 0
+        never_introduced = 0
+
+        for card in all_cards:
+            queue, introduced_today = card_manager.categorize_card(card)
+
+            if introduced_today:
+                introduced_today_count += 1
                 logger.info(f"Introduced today: {introduced_today_count}")
 
-        never_introduced = cards_count - len(cards_with_progress)
+            if queue == Queue.NEW:
+                never_introduced += 1
+            elif queue == Queue.LEARN:
+                due_progress_learn += 1
+            elif queue == Queue.DUE:
+                due_progress_review += 1
+
         remaining_new_cards = max(0, self.settings.new_cards_per_day - introduced_today_count)
         new_left_today = min(never_introduced, remaining_new_cards)
-        due_progress_learn = sum(1 for card in due_progress if card.state in {"learn", "relearn"})
-        due_progress_review = sum(1 for card in due_progress if card.state == "review")
 
         available_to_study = new_left_today + due_progress_learn + due_progress_review
         mastered = sum(1 for card in cards_with_progress if card.repetitions >= 3 and card.state == "review")

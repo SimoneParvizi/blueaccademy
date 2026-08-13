@@ -137,6 +137,8 @@ function StudyMode({ deckId, onExit }: { deckId: number; onExit: () => void }) {
   const { data: dueCards, isLoading, isFetching } = useQuery<DueCard[]>({
     queryKey: ["/api/decks", deckId, "due"],
     queryFn: () => apiRequest("GET", `/api/decks/${deckId}/due`).then((r) => r.json()),
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const cards = dueCards ?? [];
@@ -777,6 +779,8 @@ function DeckRow({
   const { data: stats } = useQuery<DeckStats>({
     queryKey: ["/api/decks", deck.id, "stats"],
     queryFn: () => apiRequest("GET", `/api/decks/${deck.id}/stats`).then((r) => r.json()),
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const newCount = stats?.newAvailable ?? 0;
@@ -1835,6 +1839,8 @@ export default function Flashcards() {
   const [settingsDeck, setSettingsDeck] = useState<Deck | null>(null);
 
   const startStudy = (id: number) => {
+    queryClient.removeQueries({ queryKey: ["/api/decks", id, "due"] });
+    queryClient.removeQueries({ queryKey: ["/api/decks", id, "stats"] });
     setStudyDeckId(id);
     setStudying(true);
     setShowSettings(false);
